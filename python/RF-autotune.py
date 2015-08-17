@@ -10,10 +10,9 @@ from bayesian_optimization import BayesianOptimization
 from make_data import make_data
 
 
-def rfccv(n_estimators, min_samples_split, max_features):
+def rfccv(n_estimators, min_samples_split):
     return cross_val_score(RFC(n_estimators=int(n_estimators),
                                min_samples_split=int(min_samples_split),
-                               max_features=min(max_features, 0.999),
                                random_state=2,
                                n_jobs=-1),
                            train, train_labels, 'roc_auc', cv=2).mean()
@@ -25,8 +24,7 @@ if __name__ == "__main__":
 
     # RF
     rfcBO = BayesianOptimization(rfccv, {'n_estimators': (100, 500),
-                                         'min_samples_split': (2, 25),
-                                         'max_features': (0.1, 0.999)})
+                                         'min_samples_split': (2, 5)})
     print('-' * 53)
     rfcBO.maximize()
     print('-' * 53)
@@ -36,7 +34,6 @@ if __name__ == "__main__":
     # # MAKING SUBMISSION
     rf = cross_val_score(RFC(n_estimators=int(rfcBO['max']['max_params']['n_estimators']),
                              min_samples_split=int(rfcBO['max']['max_params']['min_samples_split']),
-                             max_features=rfcBO['max']['max_params']['max_features'],
                              random_state=2,
                              n_jobs=-1),
                          train, test_labels, 'roc_auc', cv=2).mean()

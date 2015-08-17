@@ -24,8 +24,8 @@ if __name__ == "__main__":
     train, train_labels, test, test_labels = make_data()
 
     # RF
-    rfcBO = BayesianOptimization(rfccv, {'n_estimators': (10, 15),
-                                         'min_samples_split': (20, 25),
+    rfcBO = BayesianOptimization(rfccv, {'n_estimators': (100, 500),
+                                         'min_samples_split': (2, 25),
                                          'max_features': (0.1, 0.999)})
     print('-' * 53)
     rfcBO.maximize()
@@ -39,7 +39,7 @@ if __name__ == "__main__":
                              max_features=rfcBO['max']['max_params']['max_features'],
                              random_state=2,
                              n_jobs=-1),
-                         train, test_labels, 'roc_auc', cv=5).mean()
+                         train, test_labels, 'roc_auc', cv=2).mean()
 
     submission = pd.DataFrame(rf.fit(train, train_labels).predict_proba(test.fillna(0))[:, 1], index=test.index, columns=['target'])
     submission.index.name = 'ID'

@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     # RF
     rfcBO = BayesianOptimization(rfccv, {'n_estimators': (10, 15),
-                                         'min_samples_split': (2, 25),
+                                         'min_samples_split': (20, 25),
                                          'max_features': (0.1, 0.999)})
     print('-' * 53)
     rfcBO.maximize()

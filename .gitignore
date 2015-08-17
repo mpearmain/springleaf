@@ -11,3 +11,10 @@
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
+
+# Python files
+*.pyc
+*.csv
+
+# input data
+/input

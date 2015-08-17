@@ -38,7 +38,7 @@ def make_data():
     test_ids = test.ID
     y_train = train.target
 
-    x_train = train[features]
-    x_test = test[features]
+    x_train = train[features].fillna(0)
+    x_test = test[features].fillna(0)
 
     return x_train, y_train, x_test, test_ids

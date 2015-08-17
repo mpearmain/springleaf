@@ -3,6 +3,7 @@ require(Metrics)
 require(caret)
 require(readr)
 require(doParallel)
+require(glmnet)
 
 ## extra functions ####
 # print a formatted message
@@ -16,11 +17,11 @@ library(doParallel)
 cl <- makeCluster(3);registerDoParallel(cl)
 
 ## read data ####
-xtrain <- read_csv(file = "../input/train.csv")
+xtrain <- read_csv(file = "./input/train.csv")
 id_train <- xtrain$ID; xtrain$ID <- NULL
 y <- xtrain$target; xtrain$target <- NULL
 
-xtest <- read_csv(file = "./data/test.csv")
+xtest <- read_csv(file = "./input/test.csv")
 id_test <- xtest$ID; xtest$ID <- NULL
 
 ## preliminary preparation ####
@@ -52,7 +53,7 @@ relevMat <- array(0, c(length(idFix), ncol(xtrain)))
 for (ii in seq(idFix))
 {
   idx <- idFix[[ii]]
-  relevMat[ii,] <- apply(xtrain[idx,],2,function(s) auc(actual = y[idx], s))
+  relevMat[ii,] <- apply(xtrain[idx,],2,function(s) Metrics::auc(actual = y[idx], s))
   print(ii)
 }
 goodFeatures <- which.max(colMeans(relevMat))

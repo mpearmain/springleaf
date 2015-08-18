@@ -4,7 +4,7 @@ from __future__ import division
 __author__ = 'michael.pearmain'
 
 import pandas as pd
-from sklearn.metrics import auc
+from sklearn.metrics import roc_auc_score as auc
 from xgboost import XGBClassifier
 from bayesian_optimization import BayesianOptimization
 from make_data import make_data
@@ -35,7 +35,7 @@ def xgboostcv(max_depth,
 
     clf.fit(train, train_labels, eval_metric="auc")
 
-    return auc(clf.predict_proba(train)[:,1], train_labels)
+    return auc(train_labels, clf.predict_proba(train)[:,1])
 
 
 if __name__ == "__main__":
@@ -43,14 +43,14 @@ if __name__ == "__main__":
     train, train_labels, test, test_labels = make_data()
 
     xgboostBO = BayesianOptimization(xgboostcv,
-                                     {'max_depth': (6, 10),
+                                     {'max_depth': (5, 20),
                                       'learning_rate': (0.5, 0.05),
-                                      'n_estimators': (250, 500),
+                                      'n_estimators': (25, 50),
                                       'gamma': (1., 0.01),
                                       'min_child_weight': (1, 10),
                                       'max_delta_step': (0.99, 0.01),
-                                      'subsample': (0.65, 0.99),
-                                      'colsample_bytree': (0.8, 0.99)
+                                      'subsample': (0.65, 0.8),
+                                      'colsample_bytree': (0.7, 0.85)
                                      })
 
     xgboostBO.maximize()

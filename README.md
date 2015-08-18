@@ -17,3 +17,6 @@ train, train\_labels, valid, valid\_labels, test, test\_labels = make_data()
 This makes it easy to replicate feature engineering and abstracts the work away from the modelling.
 
 
+**Data processing**
+
+Primarily conducted in R (due to easier parallelization, handling of factors and missing values)

@@ -20,7 +20,7 @@ def rfccv(n_estimators, min_samples_split):
 
 if __name__ == "__main__":
     # Load data set and target values
-    train, train_labels, test, test_labels = make_data()
+    train, train_labels, test, test_labels = make_data(train_path = "../input/train.csv", test_path="../input/test.csv")
 
     # RF
     rfcBO = BayesianOptimization(rfccv, {'n_estimators': (600, 800),

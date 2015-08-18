@@ -15,7 +15,7 @@ def rfccv(n_estimators, min_samples_split):
                                min_samples_split=int(min_samples_split),
                                random_state=2,
                                n_jobs=-1),
-                           train, train_labels, 'roc_auc', cv=2).mean()
+                           train, train_labels, 'roc_auc', cv=5).mean()
 
 
 if __name__ == "__main__":
@@ -23,21 +23,25 @@ if __name__ == "__main__":
     train, train_labels, test, test_labels = make_data()
 
     # RF
-    rfcBO = BayesianOptimization(rfccv, {'n_estimators': (100, 500),
-                                         'min_samples_split': (2, 5)})
+    rfcBO = BayesianOptimization(rfccv, {'n_estimators': (450, 750),
+                                         'min_samples_split': (3, 8)})
     print('-' * 53)
     rfcBO.maximize()
     print('-' * 53)
     print('Final Results')
     print('RFC: %f' % rfcBO.res['max']['max_val'])
 
+
+
     # # MAKING SUBMISSION
-    rf = cross_val_score(RFC(n_estimators=int(rfcBO['max']['max_params']['n_estimators']),
-                             min_samples_split=int(rfcBO['max']['max_params']['min_samples_split']),
+    rf = cross_val_score(RFC(n_estimators=int(rfcBO.res['max']['max_params']['n_estimators']),
+                             min_samples_split=int(rfcBO.res['max']['max_params']['min_samples_split']),
                              random_state=2,
                              n_jobs=-1),
-                         train, test_labels, 'roc_auc', cv=2).mean()
+                          train, train_labels, 'roc_auc', cv=5).mean()
 
-    submission = pd.DataFrame(rf.fit(train, train_labels).predict_proba(test.fillna(0))[:, 1], index=test.index, columns=['target'])
-    submission.index.name = 'ID'
-    submission.to_csv('../RF-autotune.csv')
+    rf.fit(train, train_labels)
+    preds = rf.predict_proba(test)[:, 1]
+    print('Prediction Complete')
+    submission = submission = pd.DataFrame(preds, index=test_labels, columns=['target'])
+    submission.to_csv('./rf_autotune.csv')

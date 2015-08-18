@@ -50,13 +50,13 @@ watchlist <- list(val=xgval, train=xgtrain)
 # configure parameters
 param <- list(objective   = "binary:logistic",
               eval_metric = "auc",
-              "eta" = 0.05,
+              "eta" = 0.03,
               "min_child_weight" = 8,
-              "subsample" = .95, "colsample_bytree" = .8,
-              "max_depth" = 8,  "gamma" = 0.02, "silent" = 0)
+              "subsample" = .95, "colsample_bytree" = .75,
+              "max_depth" = 9,  "gamma" = 0.025, "silent" = 0)
 # fit the xgb
 clf <- xgb.train(params = param, data = xgtrain, 
-                 nround=350, print.every.n = 25, watchlist=watchlist, 
+                 nround=600, print.every.n = 25, watchlist=watchlist, 
                  early.stop.round = 50, maximize = TRUE)
 
 
@@ -70,4 +70,4 @@ for (rows in split(1:nrow(xtest), ceiling((1:nrow(xtest))/10000))) {
 }
 
 cat("saving the submission file\n")
-write_csv(submission, "./submissions/xgboost_submission3_20150818.csv")
+write_csv(submission, "./submissions/xgboost_submission_20150819.csv")

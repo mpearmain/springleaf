@@ -8,8 +8,11 @@ from sklearn.metrics import roc_auc_score as auc
 from xgboost import XGBClassifier
 from bayesian_optimization import BayesianOptimization
 from make_data import make_data
+from sklearn.cross_validation import KFold
 
-def xgboostcv(max_depth,
+def xgboostcv(train,
+              train_labels,
+              max_depth,
               learning_rate,
               n_estimators,
               gamma,
@@ -20,6 +23,7 @@ def xgboostcv(max_depth,
               silent=True,
               nthread=-1,
               seed=1234):
+
     clf = XGBClassifier(max_depth=int(max_depth),
                         learning_rate=learning_rate,
                         n_estimators=int(n_estimators),
@@ -33,9 +37,18 @@ def xgboostcv(max_depth,
                         seed=seed,
                         objective="binary:logistic")
 
-    clf.fit(train, train_labels, eval_metric="auc")
+    # Run Kfolds on the data model to stop over-fitting
+    kf = KFold(train_labels.shape[0], n_folds=5, shuffle=True, random_state=seed)
+    score=[]
 
-    return auc(train_labels, clf.predict_proba(train)[:,1])
+    for train_index, test_index in kf:
+        xgb_model = clf.fit(train[train_index], train_labels[train_index], eval_metric="auc")
+        y_pred = xgb_model.predict_proba(train[test_index])[:,1]
+        y_true = train_labels[test_index]
+        score.append(auc(y_true, y_pred))
+
+
+    return sum(score)/len(score)
 
 
 if __name__ == "__main__":
@@ -43,17 +56,17 @@ if __name__ == "__main__":
     train, train_labels, test, test_labels = make_data()
 
     xgboostBO = BayesianOptimization(xgboostcv,
-                                     {'max_depth': (5, 20),
-                                      'learning_rate': (0.5, 0.05),
-                                      'n_estimators': (25, 50),
-                                      'gamma': (1., 0.01),
-                                      'min_child_weight': (1, 10),
-                                      'max_delta_step': (0.99, 0.01),
-                                      'subsample': (0.65, 0.8),
-                                      'colsample_bytree': (0.7, 0.85)
+                                     {'max_depth': (11, 13),
+                                      'learning_rate': (0.45, 0.35),
+                                      'n_estimators': (25, 28),
+                                      'gamma': (1., 0.9),
+                                      'min_child_weight': (7, 8),
+                                      'max_delta_step': (0.6, 0.4),
+                                      'subsample': (0.77, 0.8),
+                                      'colsample_bytree': (0.79, 0.85)
                                      })
 
-    xgboostBO.maximize()
+    xgboostBO.maximize(init_points=2, restarts=50, n_iter=3)
     print('-' * 53)
 
     print('Final Results')

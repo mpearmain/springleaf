@@ -15,7 +15,7 @@ def rfccv(n_estimators, min_samples_split):
                                min_samples_split=int(min_samples_split),
                                random_state=2,
                                n_jobs=-1),
-                           train, train_labels, 'roc_auc', cv=2).mean()
+                           train, train_labels, 'roc_auc', cv=5).mean()
 
 
 if __name__ == "__main__":
@@ -23,8 +23,8 @@ if __name__ == "__main__":
     train, train_labels, test, test_labels = make_data()
 
     # RF
-    rfcBO = BayesianOptimization(rfccv, {'n_estimators': (450, 750),
-                                         'min_samples_split': (3, 8)})
+    rfcBO = BayesianOptimization(rfccv, {'n_estimators': (600, 800),
+                                         'min_samples_split': (2, 5)})
     print('-' * 53)
     rfcBO.maximize()
     print('-' * 53)

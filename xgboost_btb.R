@@ -1,46 +1,73 @@
+## wd etc ####
 library(readr)
 library(xgboost)
 
 set.seed(1)
 
+## load and process data ####
 cat("reading the train and test data\n")
-train <- read_csv("./input/train.csv")
-test  <- read_csv("./input/test.csv")
+xtrain <- read_csv(file = "./input/train.csv")
+id_train <- xtrain$ID; xtrain$ID <- NULL
+y <- xtrain$target; xtrain$target <- NULL
 
-feature.names <- names(train)[2:ncol(train)-1]
+xtest <- read_csv(file = "./input/test.csv")
+id_test <- xtest$ID; xtest$ID <- NULL
 
+## preliminary preparation ####
+# drop constant columns
+is_missing <- colSums(is.na(xtrain))
+constant_columns <- which(is_missing == nrow(xtrain))
+xtrain <- xtrain[,-constant_columns]
+xtest <- xtest[,-constant_columns]
+rm(is_missing, constant_columns)
+
+# map all categoricals into numeric => probably BS
 cat("assuming text variables are categorical & replacing them with numeric ids\n")
-for (f in feature.names) {
-  if (class(train[[f]])=="character") {
-    levels <- unique(c(train[[f]], test[[f]]))
-    train[[f]] <- as.integer(factor(train[[f]], levels=levels))
-    test[[f]]  <- as.integer(factor(test[[f]],  levels=levels))
+for (f in colnames(xtrain)) {
+  if (class(xtrain[[f]])=="character") {
+    levels <- unique(c(xtrain[[f]], xtest[[f]]))
+    xtrain[[f]] <- as.integer(factor(xtrain[[f]], levels=levels))
+    xtest[[f]]  <- as.integer(factor(xtest[[f]],  levels=levels))
   }
 }
 
+# handle NAs
 cat("replacing missing values with -1\n")
-train[is.na(train)] <- -1
-test[is.na(test)]   <- -1
+xtrain[is.na(xtrain)] <- -1
+xtest[is.na(xtest)]   <- -1
 
-cat("sampling train to get around 8GB memory limitations\n")
-train <- train[sample(nrow(train), 40000),]
-gc()
+## fit the model with early stopping ####
+set.seed(20150817)
+val_size <- 10000
+subrange <- sample(nrow(xtrain), size = val_size)
 
-cat("training a XGBoost classifier\n")
-clf <- xgboost(data        = data.matrix(train[,feature.names]),
-               label       = train$target,
-               nrounds     = 200,
-               objective   = "binary:logistic",
-               eval_metric = "auc",
-               eta         = 0.05,
-               verbose = 1)
+# Set xgboost test and training and validation datasets
+xgtest <- xgb.DMatrix(data = as.matrix(xtest))
+xgtrain <- xgb.DMatrix(data = as.matrix(xtrain)[-subrange,], label= y[-subrange])
+xgval <-  xgb.DMatrix(data = as.matrix(xtrain)[subrange,], label= y[subrange])
+watchlist <- list(val=xgval, train=xgtrain)
 
+# configure parameters
+param <- list(objective   = "binary:logistic",
+              eval_metric = "auc",
+              "eta" = 0.05,
+              "min_child_weight" = 8,
+              "subsample" = .95, "colsample_bytree" = .8,
+              "max_depth" = 8,  "gamma" = 0.02, "silent" = 0)
+# fit the xgb
+clf <- xgb.train(params = param, data = xgtrain, 
+                 nround=350, print.every.n = 25, watchlist=watchlist, 
+                 early.stop.round = 50, maximize = TRUE)
+
+
+
+## generate submission on complete training set ####
 cat("making predictions in batches due to 8GB memory limitation\n")
-submission <- data.frame(ID=test$ID)
+submission <- data.frame(ID=id_test)
 submission$target <- NA 
-for (rows in split(1:nrow(test), ceiling((1:nrow(test))/10000))) {
-  submission[rows, "target"] <- predict(clf, data.matrix(test[rows,feature.names]))
+for (rows in split(1:nrow(xtest), ceiling((1:nrow(xtest))/10000))) {
+  submission[rows, "target"] <- predict(clf, data.matrix(xtest[rows,]))
 }
 
 cat("saving the submission file\n")
-write_csv(submission, "./submissions/xgboost_submission2_20150818.csv")
+write_csv(submission, "./submissions/xgboost_submission3_20150818.csv")

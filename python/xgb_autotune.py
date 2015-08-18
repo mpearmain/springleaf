@@ -72,6 +72,6 @@ if __name__ == "__main__":
 
     clf.fit(train, train_labels, eval_metric="auc")
     print('Prediction Complete')
-    preds = clf.predict_proba(test.fillna(0))[:, 1]
+    preds = clf.predict_proba(test)[:, 1]
     submission = submission = pd.DataFrame(preds, index=test_labels, columns=['target'])
     submission.to_csv('../xgb_autotune.csv')

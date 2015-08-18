@@ -39,7 +39,7 @@ def make_data(train_path = "../input/train.csv", test_path="../input/test.csv" )
 
     print("Shape of x_train:", np.shape(x_train))
     print("Shape of y_train:", np.shape(y_train))
-    print("Shape of x_test:", np.shape(test))
+    print("Shape of x_test:", np.shape(test.fillna(0)))
     print("Shape of test_index:", np.shape(test.index))
 
-    return x_train, y_train, test, test.index
+    return x_train, y_train, test.fillna(0), test.index

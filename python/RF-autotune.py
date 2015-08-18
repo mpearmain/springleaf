@@ -15,7 +15,7 @@ def rfccv(n_estimators, min_samples_split):
                                min_samples_split=int(min_samples_split),
                                random_state=2,
                                n_jobs=-1),
-                           train, train_labels, 'roc_auc', cv=5).mean()
+                           train, train_labels, 'roc_auc', cv=2).mean()
 
 
 if __name__ == "__main__":
@@ -30,8 +30,6 @@ if __name__ == "__main__":
     print('-' * 53)
     print('Final Results')
     print('RFC: %f' % rfcBO.res['max']['max_val'])
-
-
 
     # # MAKING SUBMISSION
     rf = cross_val_score(RFC(n_estimators=int(rfcBO.res['max']['max_params']['n_estimators']),

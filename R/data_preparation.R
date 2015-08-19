@@ -175,7 +175,7 @@ for (ff in time_cols)
   x <- xdat_fc[,ff];  x <- str_sub(x,0,-10) 
   x[x == ""] <- "99JAN99"; xdat_fc[,ff] <- x
 }
-xdat$nof_unique_dates <- apply(xdat_fc[,time_cols],1,function(s) length(unique(s)))
+xdat_fc$nof_unique_dates <- apply(xdat_fc[,time_cols],1,function(s) length(unique(s)))
 # smallest year within the dates
 xdat_fc$first_year <- apply(xdat_fc[,time_cols],1,function(s) min(as.integer(str_sub(as.character(s),-2))))
 xdat_fc$latest_year <- apply(xdat_fc[,time_cols],1, extractYear)

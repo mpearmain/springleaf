@@ -16,7 +16,6 @@ val_size <- 14000
 subrange <- sample(nrow(xtrain), size = val_size)
 
 # Set xgboost test and training and validation datasets
-xgtest <- xgb.DMatrix(data = as.matrix(xtest))
 xgtrain <- xgb.DMatrix(data = as.matrix(xtrain)[-subrange,], label= y[-subrange])
 xgval <-  xgb.DMatrix(data = as.matrix(xtrain)[subrange,], label= y[subrange])
 watchlist <- list(val=xgval, train=xgtrain)
@@ -27,7 +26,7 @@ param <- list(objective   = "binary:logistic",
               "eta" = 0.05,
               "min_child_weight" = 8,
               "subsample" = .9, "colsample_bytree" = .7,
-              "max_depth" = 9,  "gamma" = 0.025, "silent" = 0)
+              "max_depth" = 11,  "gamma" = 0.025, "silent" = 0)
 # fit the xgb
 clf <- xgb.train(params = param, data = xgtrain, 
                  nround=350, print.every.n = 25, watchlist=watchlist, 
@@ -37,6 +36,7 @@ clf <- xgb.train(params = param, data = xgtrain,
 ## generate submission on complete training set ####
 xtest <- read_csv(file = "./input/test.csv")
 id_test <- xtest$ID; xtest$ID <- NULL
+xgtest <- xgb.DMatrix(data = as.matrix(xtest))
 
 cat("making predictions in batches due to 8GB memory limitation\n")
 submission <- data.frame(ID=id_test)

@@ -39,7 +39,7 @@ def xgboostcv(max_depth,
     X_train, X_test, y_train, y_test = train_test_split(train,
                                                         train_labels,
                                                         test_size=0.1,
-                                                        random_state=1234)
+                                                        random_state=seed)
     xgb_model = clf.fit(X_train, y_train, eval_metric="auc")
     y_pred = xgb_model.predict_proba(X_test)[:,1]
 
@@ -65,6 +65,9 @@ if __name__ == "__main__":
 
     print('Final Results')
     print('XGBOOST: %f' % xgboostBO.res['max']['max_val'])
+
+
+    # Build and Run on the full data set and the validation set for ensembling later.
 
     clf = XGBClassifier(max_depth=int(xgboostBO.res['max']['max_params']['max_depth']),
                                                learning_rate=xgboostBO.res['max']['max_params']['learning_rate'],

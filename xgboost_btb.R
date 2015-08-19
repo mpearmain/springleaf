@@ -70,4 +70,4 @@ for (rows in split(1:nrow(xtest), ceiling((1:nrow(xtest))/10000))) {
 }
 
 cat("saving the submission file\n")
-write_csv(submission, "./submissions/xgboost_submission_20150819.csv")
+write_csv(submission, "./submissions/xgboost_submission2_20150819.csv")

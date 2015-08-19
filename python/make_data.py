@@ -8,7 +8,6 @@ from sklearn import preprocessing
 import numpy as np
 
 
-
 def make_data(train_path, test_path):
     train = pd.read_csv(train_path).set_index("ID")
     test = pd.read_csv(test_path).set_index("ID")

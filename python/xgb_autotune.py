@@ -84,4 +84,4 @@ if __name__ == "__main__":
     print('Prediction Complete')
     preds = clf.predict_proba(test)[:, 1]
     submission = submission = pd.DataFrame(preds, index=test_labels, columns=['target'])
-    submission.to_csv('../xgb_autotune.csv')
+    submission.to_csv('../output/xgb_autotune.csv')

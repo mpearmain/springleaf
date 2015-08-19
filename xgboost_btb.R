@@ -50,13 +50,13 @@ watchlist <- list(val=xgval, train=xgtrain)
 # configure parameters
 param <- list(objective   = "binary:logistic",
               eval_metric = "auc",
-              "eta" = 0.03,
+              "eta" = 0.02,
               "min_child_weight" = 8,
-              "subsample" = .95, "colsample_bytree" = .75,
-              "max_depth" = 9,  "gamma" = 0.025, "silent" = 0)
+              "subsample" = .9, "colsample_bytree" = .7,
+              "max_depth" = 11,  "gamma" = 0.025, "silent" = 0)
 # fit the xgb
 clf <- xgb.train(params = param, data = xgtrain, 
-                 nround=600, print.every.n = 25, watchlist=watchlist, 
+                 nround=900, print.every.n = 25, watchlist=watchlist, 
                  early.stop.round = 50, maximize = TRUE)
 
 

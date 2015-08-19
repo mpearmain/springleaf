@@ -15,4 +15,5 @@ vignettes/*.pdf
 /input
 .Rproj.user
 springleaf.Rproj
+/output
 submissions/

@@ -8,11 +8,9 @@ from sklearn.metrics import roc_auc_score as auc
 from xgboost import XGBClassifier
 from bayesian_optimization import BayesianOptimization
 from make_data import make_data
-from sklearn.cross_validation import KFold
+from sklearn.cross_validation import train_test_split
 
-def xgboostcv(train,
-              train_labels,
-              max_depth,
+def xgboostcv(max_depth,
               learning_rate,
               n_estimators,
               gamma,
@@ -38,39 +36,38 @@ def xgboostcv(train,
                         objective="binary:logistic")
 
     # Run Kfolds on the data model to stop over-fitting
-    kf = KFold(train_labels.shape[0], n_folds=5, shuffle=True, random_state=seed)
-    score=[]
+    X_train, X_test, y_train, y_test = train_test_split(train,
+                                                        train_labels,
+                                                        test_size=0.1,
+                                                        random_state=seed)
+    xgb_model = clf.fit(X_train, y_train, eval_metric="auc")
+    y_pred = xgb_model.predict_proba(X_test)[:,1]
 
-    for train_index, test_index in kf:
-        xgb_model = clf.fit(train[train_index], train_labels[train_index], eval_metric="auc")
-        y_pred = xgb_model.predict_proba(train[test_index])[:,1]
-        y_true = train_labels[test_index]
-        score.append(auc(y_true, y_pred))
-
-
-    return sum(score)/len(score)
-
+    return auc(y_test, y_pred)
 
 if __name__ == "__main__":
     # Load data set and target values
-    train, train_labels, test, test_labels = make_data()
+    train, train_labels, test, test_labels = make_data(train_path = "../input/train.csv", test_path="../input/test.csv")
 
     xgboostBO = BayesianOptimization(xgboostcv,
-                                     {'max_depth': (11, 13),
-                                      'learning_rate': (0.45, 0.35),
-                                      'n_estimators': (25, 28),
-                                      'gamma': (1., 0.9),
-                                      'min_child_weight': (7, 8),
+                                     {'max_depth': (7, 20),
+                                      'learning_rate': (0.45, 0.01),
+                                      'n_estimators': (100, 500),
+                                      'gamma': (1., 0.1),
+                                      'min_child_weight': (2, 15),
                                       'max_delta_step': (0.6, 0.4),
-                                      'subsample': (0.77, 0.8),
-                                      'colsample_bytree': (0.79, 0.85)
+                                      'subsample': (0.7, 0.9),
+                                      'colsample_bytree': (0.7, 0.9)
                                      })
 
-    xgboostBO.maximize(init_points=2, restarts=50, n_iter=3)
+    xgboostBO.maximize(init_points=5, restarts=50, n_iter=25)
     print('-' * 53)
 
     print('Final Results')
     print('XGBOOST: %f' % xgboostBO.res['max']['max_val'])
+
+
+    # Build and Run on the full data set and the validation set for ensembling later.
 
     clf = XGBClassifier(max_depth=int(xgboostBO.res['max']['max_params']['max_depth']),
                                                learning_rate=xgboostBO.res['max']['max_params']['learning_rate'],
@@ -87,4 +84,4 @@ if __name__ == "__main__":
     print('Prediction Complete')
     preds = clf.predict_proba(test)[:, 1]
     submission = submission = pd.DataFrame(preds, index=test_labels, columns=['target'])
-    submission.to_csv('../xgb_autotune.csv')
+    submission.to_csv('../output/xgb_autotune.csv')

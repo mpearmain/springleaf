@@ -40,7 +40,7 @@ def xgboostcv(max_depth,
                                                         train_labels,
                                                         test_size=0.1,
                                                         random_state=seed)
-    xgb_model = clf.fit(X_train, y_train, eval_metric="auc")
+    xgb_model = clf.fit(X_train, y_train, eval_set=[(X_test, y_test)], eval_metric="auc", early_stopping_rounds=10)
     y_pred = xgb_model.predict_proba(X_test)[:,1]
 
     return auc(y_test, y_pred)
@@ -50,17 +50,17 @@ if __name__ == "__main__":
     train, train_labels, test, test_labels = make_data(train_path = "../input/train.csv", test_path="../input/test.csv")
 
     xgboostBO = BayesianOptimization(xgboostcv,
-                                     {'max_depth': (7, 20),
-                                      'learning_rate': (0.45, 0.01),
-                                      'n_estimators': (100, 500),
+                                     {'max_depth': (7, 15),
+                                      'learning_rate': (0.45, 0.2),
+                                      'n_estimators': (300, 1000),
                                       'gamma': (1., 0.1),
                                       'min_child_weight': (2, 15),
-                                      'max_delta_step': (0.6, 0.4),
-                                      'subsample': (0.7, 0.9),
-                                      'colsample_bytree': (0.7, 0.9)
+                                      'max_delta_step': (0., 0.4),
+                                      'subsample': (0.7, 0.85),
+                                      'colsample_bytree': (0.7, 0.85)
                                      })
 
-    xgboostBO.maximize(init_points=5, restarts=50, n_iter=25)
+    xgboostBO.maximize(init_points=5, restarts=50, n_iter=10)
     print('-' * 53)
 
     print('Final Results')

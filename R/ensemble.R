@@ -4,8 +4,8 @@ library(data.table)
 
 # Best model so far.
 # Build a list of data sets.
-ensemble.data <- list(fread('rf_autotune.csv'),
-                      fread('xgb_autotune.csv'))
+ensemble.data <- list(fread('./output/ftrl1sub.csv'),
+                      fread('./output/xgb_autotune.csv'))
 # Rename the datasets to avoid name collisions in the merge.
 ensemble.data <- lapply(seq_along(ensemble.data), 
                         function(x) setnames(ensemble.data[[x]], c('ID', paste0('target', x))))

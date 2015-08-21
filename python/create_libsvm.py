@@ -8,7 +8,7 @@ from csv import DictReader
 # Data locations
 projPath = "/home/michaelpearmain/Kaggle/springleaf/"
 
-with open(projPath + 'input/xtrain.vw',"wb") as outfile:
+with open(projPath + 'input/xtrain.libsvm',"wb") as outfile:
     for linenr, row in enumerate( DictReader(open(projPath + 'input/xtrain_v1.csv',"rb")) ):
         n_d = ""
         for kk in row.keys():
@@ -25,7 +25,7 @@ with open(projPath + 'input/xtrain.vw',"wb") as outfile:
 print("Finished Training data conversion")
 print("Starting Test data conversion")
 
-with open(projPath + 'input/xtest.vw',"wb") as outfile:
+with open(projPath + 'input/xtest.libsvm',"wb") as outfile:
     for linenr, row in enumerate( DictReader(open(projPath + 'input/xtest_v1.csv',"rb")) ):
         n_d = ""
         for kk in row.keys():

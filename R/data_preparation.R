@@ -3,7 +3,6 @@ require(Metrics)
 require(caret)
 require(readr)
 require(doParallel)
-require(glmnet)
 require(stringr)
 
 ## extra functions ####
@@ -28,6 +27,49 @@ extractYear <- function(vec)
 }
 
 ## prepare dataset v1 ####
+# all numbers => good basis for VW
+xtrain <- read_csv(file = "./input/train.csv")
+id_train <- xtrain$ID; xtrain$ID <- NULL
+y <- xtrain$target; xtrain$target <- NULL
+
+xtest <- read_csv(file = "./input/test.csv")
+id_test <- xtest$ID; xtest$ID <- NULL
+
+# drop constant columns
+is_missing <- colSums(is.na(xtrain))
+constant_columns <- which(is_missing == nrow(xtrain))
+xtrain <- xtrain[,-constant_columns]
+xtest <- xtest[,-constant_columns]
+rm(is_missing, constant_columns)
+
+# catch factor columns
+fact_cols <- which(lapply(xtrain, class) == "character")
+# map all categoricals into numeric => probably BS
+cat("assuming text variables are categorical & replacing them with numeric ids\n")
+for (f in colnames(xtrain)) {
+  
+  if (class(xtrain[[f]])=="character") {
+    levels <- unique(c(xtrain[[f]], xtest[[f]]))
+    xtrain[[f]] <- as.integer(factor(xtrain[[f]], levels=levels))
+    xtest[[f]]  <- as.integer(factor(xtest[[f]],  levels=levels))
+  }
+}
+
+# handle NAs
+cat("replacing missing values with -1\n")
+xtrain[is.na(xtrain)] <- -1
+xtest[is.na(xtest)]   <- -1
+
+
+xtrain$ID <- id_train; xtrain$target <- y
+write_csv(xtrain, path = "./input/xtrain_v1.csv")
+
+xtest$ID <- id_test
+write_csv(xtest, path = "./input/xtest_v1.csv")
+rm(xdat_fc, xtrain, xtrain_fc, xtest, xtest_fc)
+
+## prepare dataset v2 ####
+# all factors mapped to model matrices
 xtrain <- read_csv(file = "./input/train.csv")
 id_train <- xtrain$ID; xtrain$ID <- NULL
 y <- xtrain$target; xtrain$target <- NULL
@@ -186,94 +228,15 @@ xdat_fc <- xdat_fc[, -which(colnames(xdat_fc) %in% time_cols)]
 xtrain_fc <- xdat_fc[isTrain,]
 xtrain <- data.frame(xtrain, xtrain_fc)
 xtrain$ID <- id_train; xtrain$target <- y
-write_csv(xtrain, path = "./input/xtrain_v1.csv")
+write_csv(xtrain, path = "./input/xtrain_v2.csv")
 
 xtest_fc <- xdat_fc[-isTrain,]
 xtest <- data.frame(xtest, xtest_fc)
 xtest$ID <- id_test
-write_csv(xtest, path = "./input/xtest_v1.csv")
-rm(xdat_fc, xtrain, xtrain_fc, xtest, xtest_fc)
-
-## prepare dataset v2 ####
-# all numbers => good basis for VW
-xtrain <- read_csv(file = "./input/train.csv")
-id_train <- xtrain$ID; xtrain$ID <- NULL
-y <- xtrain$target; xtrain$target <- NULL
-
-xtest <- read_csv(file = "./input/test.csv")
-id_test <- xtest$ID; xtest$ID <- NULL
-
-# drop constant columns
-is_missing <- colSums(is.na(xtrain))
-constant_columns <- which(is_missing == nrow(xtrain))
-xtrain <- xtrain[,-constant_columns]
-xtest <- xtest[,-constant_columns]
-rm(is_missing, constant_columns)
-
-# catch factor columns
-fact_cols <- which(lapply(xtrain, class) == "character")
-# map all categoricals into numeric => probably BS
-cat("assuming text variables are categorical & replacing them with numeric ids\n")
-for (f in colnames(xtrain)) {
-  
-  if (class(xtrain[[f]])=="character") {
-    levels <- unique(c(xtrain[[f]], xtest[[f]]))
-    xtrain[[f]] <- as.integer(factor(xtrain[[f]], levels=levels))
-    xtest[[f]]  <- as.integer(factor(xtest[[f]],  levels=levels))
-  }
-}
-
-# handle NAs
-cat("replacing missing values with -1\n")
-xtrain[is.na(xtrain)] <- -1
-xtest[is.na(xtest)]   <- -1
-
-
-xtrain$ID <- id_train; xtrain$target <- y
-write_csv(xtrain, path = "./input/xtrain_v2.csv")
-
-xtest$ID <- id_test
 write_csv(xtest, path = "./input/xtest_v2.csv")
 rm(xdat_fc, xtrain, xtrain_fc, xtest, xtest_fc)
 
-## prepare dataset v3 (=v2 without factors) ####
-xtrain <- read_csv(file = "./input/train.csv")
-id_train <- xtrain$ID; xtrain$ID <- NULL
-y <- xtrain$target; xtrain$target <- NULL
+# SFSG # 
 
-xtest <- read_csv(file = "./input/test.csv")
-id_test <- xtest$ID; xtest$ID <- NULL
-
-# drop constant columns
-is_missing <- colSums(is.na(xtrain))
-constant_columns <- which(is_missing == nrow(xtrain))
-xtrain <- xtrain[,-constant_columns]
-xtest <- xtest[,-constant_columns]
-rm(is_missing, constant_columns)
-
-# catch factor columns
-fact_cols <- which(lapply(xtrain, class) == "character")
-# map all categoricals into numeric => probably BS
-cat("assuming text variables are categorical & replacing them with numeric ids\n")
-for (f in colnames(xtrain)) {
-  
-  if (class(xtrain[[f]])=="character") {
-    levels <- unique(c(xtrain[[f]], xtest[[f]]))
-    xtrain[[f]] <- as.integer(factor(xtrain[[f]], levels=levels))
-    xtest[[f]]  <- as.integer(factor(xtest[[f]],  levels=levels))
-  }
-}
-
-# handle NAs
-cat("replacing missing values with -1\n")
-xtrain[is.na(xtrain)] <- -1
-xtest[is.na(xtest)]   <- -1
-
-xtrain <- xtrain[,-fact_cols]
-xtrain$ID <- id_train; xtrain$target <- y
-write_csv(xtrain, path = "./input/xtrain_v3.csv")
-
-xtest <- xtest[,-fact_cols]
-xtest$ID <- id_test
-write_csv(xtest, path = "./input/xtest_v3.csv")
-rm(xdat_fc, xtrain, xtrain_fc, xtest, xtest_fc)
+## prepare dataset v3 ####
+# create some more factors (combos of reasonable ones)

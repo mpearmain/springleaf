@@ -235,7 +235,7 @@ write_csv(xtest, path = "./input/xtest_v2.csv")
 rm(xdat_fc, xtrain, xtrain_fc, xtest, xtest_fc)
 
 ## prepare dataset v3 ####
-# create some more factors (combos of reasonable ones)
+# clean up factors => store for VW preparation
 xtrain <- read_csv(file = "./input/train.csv")
 id_train <- xtrain$ID; xtrain$ID <- NULL
 y <- xtrain$target; xtrain$target <- NULL
@@ -259,3 +259,7 @@ fact_cols <- which(col_types == "character")
 
 xtrain_fc <- xtrain[,fact_cols]; xtrain <- xtrain[, -fact_cols]
 xtest_fc <- xtest[,fact_cols]; xtest <- xtest[, -fact_cols]
+xtrain$ID <- id_train; xtrain$target <- y
+write_csv(xtrain, path = "./input/xtrain_v3.csv")
+xtest$ID <- id_test
+write_csv(xtest, path = "./input/xtest_v3.csv")

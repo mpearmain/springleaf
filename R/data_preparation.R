@@ -66,7 +66,6 @@ write_csv(xtrain, path = "./input/xtrain_v1.csv")
 
 xtest$ID <- id_test
 write_csv(xtest, path = "./input/xtest_v1.csv")
-rm(xdat_fc, xtrain, xtrain_fc, xtest, xtest_fc)
 
 ## prepare dataset v2 ####
 # all factors mapped to model matrices
@@ -94,7 +93,6 @@ fact_cols <- which(col_types == "character")
 xtrain_fc <- xtrain[,fact_cols]; xtrain <- xtrain[, -fact_cols]
 xtest_fc <- xtest[,fact_cols]; xtest <- xtest[, -fact_cols]
 
-# SFSG # 
 # handle factors - case by case, unfortunately, as shit is all over the place
 # (quite literally in some cases)
 isTrain <- 1:nrow(xtrain_fc)
@@ -236,7 +234,28 @@ xtest$ID <- id_test
 write_csv(xtest, path = "./input/xtest_v2.csv")
 rm(xdat_fc, xtrain, xtrain_fc, xtest, xtest_fc)
 
-# SFSG # 
-
 ## prepare dataset v3 ####
 # create some more factors (combos of reasonable ones)
+xtrain <- read_csv(file = "./input/train.csv")
+id_train <- xtrain$ID; xtrain$ID <- NULL
+y <- xtrain$target; xtrain$target <- NULL
+
+xtest <- read_csv(file = "./input/test.csv")
+id_test <- xtest$ID; xtest$ID <- NULL
+
+## preliminary preparation
+# drop constant columns
+is_missing <- colSums(is.na(xtrain))
+constant_columns <- which(is_missing == nrow(xtrain))
+xtrain <- xtrain[,-constant_columns]
+xtest <- xtest[,-constant_columns]
+rm(is_missing, constant_columns)
+
+# check column types
+is_missing <- which(colSums(is.na(xtrain)) > 0)
+xtrain[is.na(xtrain)] <- -1; xtest[is.na(xtest)] <- -1
+col_types <- unlist(lapply(xtrain, class))
+fact_cols <- which(col_types == "character")
+
+xtrain_fc <- xtrain[,fact_cols]; xtrain <- xtrain[, -fact_cols]
+xtest_fc <- xtest[,fact_cols]; xtest <- xtest[, -fact_cols]

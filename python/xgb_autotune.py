@@ -40,7 +40,7 @@ def xgboostcv(max_depth,
                                                         train_labels,
                                                         test_size=0.1,
                                                         random_state=seed)
-    xgb_model = clf.fit(X_train, y_train, eval_set=[(X_test, y_test)], eval_metric="auc", early_stopping_rounds=10)
+    xgb_model = clf.fit(X_train, y_train, eval_metric="auc")
     y_pred = xgb_model.predict_proba(X_test)[:,1]
 
     return auc(y_test, y_pred)
@@ -67,9 +67,11 @@ if __name__ == "__main__":
     print('XGBOOST: %f' % xgboostBO.res['max']['max_val'])
 
 
-    # Build and Run on the full data set and the validation set for ensembling later.
+    # Build and Run on the full data set K-fold times for bagging
 
-    clf = XGBClassifier(max_depth=int(xgboostBO.res['max']['max_params']['max_depth']),
+    seeds = [1234, 5434, 87897, 123125, 88888]
+    for seed_bag in seeds:
+        clf = XGBClassifier(max_depth=int(xgboostBO.res['max']['max_params']['max_depth']),
                                                learning_rate=xgboostBO.res['max']['max_params']['learning_rate'],
                                                n_estimators=int(xgboostBO.res['max']['max_params']['n_estimators']),
                                                gamma=xgboostBO.res['max']['max_params']['gamma'],
@@ -77,11 +79,12 @@ if __name__ == "__main__":
                                                max_delta_step=xgboostBO.res['max']['max_params']['max_delta_step'],
                                                subsample=xgboostBO.res['max']['max_params']['subsample'],
                                                colsample_bytree=xgboostBO.res['max']['max_params']['colsample_bytree'],
-                                               seed=1234,
+                                               seed=seed_bag,
                                                objective="binary:logistic")
 
-    clf.fit(train, train_labels, eval_metric="auc")
-    print('Prediction Complete')
-    preds = clf.predict_proba(test)[:, 1]
-    submission = submission = pd.DataFrame(preds, index=test_labels, columns=['target'])
-    submission.to_csv('../output/xgb_autotune.csv')
+        clf.fit(train, train_labels, eval_metric="auc")
+        print('Prediction Complete')
+        preds = clf.predict_proba(test)[:, 1]
+        submission = submission = pd.DataFrame(preds, index=test_labels, columns=['target'])
+        outfile_seed = '../output/xgb_autotune' + seed_bag + '.csv'
+        submission.to_csv(outfile_seed)

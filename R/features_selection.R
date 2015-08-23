@@ -105,7 +105,7 @@ for (which_version in c("v1","v2","v3"))
   subset1 <- which(apply(relevMat,2,prod) != 0)
   xtrain1 <- xtrain[,subset1]
   xtest1 <- xtest[,subset1]
-  xtrain1$ID <- id_train; xtest$ID <- id_test
+  xtrain1$ID <- id_train; xtest1$ID <- id_test
   xtrain1$target <- y
   write_csv(xtrain1, path = paste("./input/xtrain_",which_version,"_r1.csv", sep = "") )
   write_csv(xtest1, path = paste("./input/xtest_",which_version,"_r1.csv", sep = "") )

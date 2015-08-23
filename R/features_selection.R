@@ -80,8 +80,6 @@ msg <- function(mmm,...)
 
 ## feature selection - gbm-based ####
 # load the results from greedy feature selection
-load("./input/greedy_feature_selection.RData")
-
 for (which_version in c("v1","v2","v3"))
 {
   xtrain <- read_csv(file = paste("./input/xtrain_",which_version,".csv",sep = "") )

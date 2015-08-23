@@ -79,6 +79,9 @@ rm(id_test, id_train, idFix, msg, relevMat, xtest, xtrain,y)
 save.image("greedy_feature_selection.RData")
 
 ## feature selection - gbm-based ####
+# load the results from greedy feature selection
+load("./input/greedy_feature_selection.RData")
+
 for (which_version in c("v1","v2","v3"))
 {
   xtrain <- read_csv(file = paste("./input/xtrain_",which_version,".csv",sep = "") )
@@ -110,7 +113,7 @@ for (which_version in c("v1","v2","v3"))
   write_csv(xtrain1, path = paste("./input/xtrain_",which_version,"_r1.csv", sep = "") )
   write_csv(xtest1, path = paste("./input/xtest_",which_version,"_r1.csv", sep = "") )
   
-  # version 2: at least one non-zero
+  # version 2: non-zero 0.25 of the time
   subset1 <- which(apply(apply(relevMat,2,sign),2,sum) > 0.25 * length(idFix))
   xtrain1 <- xtrain[,subset1]
   xtest1 <- xtest[,subset1]
@@ -118,4 +121,13 @@ for (which_version in c("v1","v2","v3"))
   xtrain1$target <- y
   write_csv(xtrain1, path = paste("./input/xtrain_",which_version,"_r2.csv", sep = "") )
   write_csv(xtest1, path = paste("./input/xtest_",which_version,"_r2.csv", sep = "") )
+  
+  # version 3: non-zero 0.5 of the time
+  subset1 <- which(apply(apply(relevMat,2,sign),2,sum) > 0.5 * length(idFix))
+  xtrain1 <- xtrain[,subset1]
+  xtest1 <- xtest[,subset1]
+  xtrain1$ID <- id_train; xtest1$ID <- id_test
+  xtrain1$target <- y
+  write_csv(xtrain1, path = paste("./input/xtrain_",which_version,"_r3.csv", sep = "") )
+  write_csv(xtest1, path = paste("./input/xtest_",which_version,"_r3.csv", sep = "") )
 }

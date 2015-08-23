@@ -16,17 +16,17 @@ msg <- function(mmm,...)
 
 ## feature selection - greedy ####
 # select a good feature to start with
-set.seed(20150817)
-idFix <- createFolds(y, k = 5, list = T)
-relevMat <- array(0, c(length(idFix), ncol(xtrain)))
-for (ii in seq(idFix))
-{
-  idx <- idFix[[ii]]
-  relevMat[ii,] <- apply(xtrain[idx,],2,function(s) Metrics::auc(actual = y[idx], s))
-  print(ii)
-}
-goodFeatures <- which.max(colMeans(relevMat))
-goodScore <- mean(relevMat[,goodFeatures])
+# set.seed(20150817)
+# idFix <- createFolds(y, k = 5, list = T)
+# relevMat <- array(0, c(length(idFix), ncol(xtrain)))
+# for (ii in seq(idFix))
+# {
+#   idx <- idFix[[ii]]
+#   relevMat[ii,] <- apply(xtrain[idx,],2,function(s) Metrics::auc(actual = y[idx], s))
+#   print(ii)
+# }
+# goodFeatures <- which.max(colMeans(relevMat))
+# goodScore <- mean(relevMat[,goodFeatures])
 # goodFeatures: 78
 # goodScore: 0.6422847
 

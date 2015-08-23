@@ -3,7 +3,7 @@ require(Metrics)
 require(caret)
 require(readr)
 require(doParallel)
-require(glmnet)
+require(gbm)
 
 ## extra functions ####
 # print a formatted message
@@ -12,40 +12,9 @@ msg <- function(mmm,...)
   cat(sprintf(paste0("[%s] ",mmm),Sys.time(),...)); cat("\n")
 }
 
-## configure the cluster ####
-library(doParallel)
-cl <- makeCluster(5);registerDoParallel(cl)
-
-## read data ####
-xtrain <- read_csv(file = "./input/train.csv")
-id_train <- xtrain$ID; xtrain$ID <- NULL
-y <- xtrain$target; xtrain$target <- NULL
-
-xtest <- read_csv(file = "./input/test.csv")
-id_test <- xtest$ID; xtest$ID <- NULL
-
-## preliminary preparation ####
-# drop constant columns
-is_missing <- colSums(is.na(xtrain))
-constant_columns <- which(is_missing == nrow(xtrain))
-xtrain <- xtrain[,-constant_columns]
-xtest <- xtest[,-constant_columns]
-rm(is_missing, constant_columns)
-
-# check column types
-is_missing <- colSums(is.na(xtrain))
-is_missing <- which(is_missing > 0)
-xtrain[is.na(xtrain)] <- -1
-xtest[is.na(xtest)] <- -1
-col_types <- unlist(lapply(xtrain, class))
-fact_cols <- which(col_types == "character")
-
-xtrain_fc <- xtrain[,fact_cols]
-xtrain <- xtrain[, -fact_cols]
-
 # SFSG # 
 
-## feature selection ####
+## feature selection - greedy ####
 # select a good feature to start with
 set.seed(20150817)
 idFix <- createFolds(y, k = 5, list = T)
@@ -108,3 +77,45 @@ write_csv(xtest, path = "./input/xtest_r1.csv" )
 
 rm(id_test, id_train, idFix, msg, relevMat, xtest, xtrain,y)
 save.image("greedy_feature_selection.RData")
+
+## feature selection - gbm-based ####
+for (which_version in c("v1","v2","v3"))
+{
+  xtrain <- read_csv(file = paste("./input/xtrain_",which_version,".csv",sep = "") )
+  id_train <- xtrain$ID; xtrain$ID <- NULL
+  y <- xtrain$target; xtrain$target <- NULL
+  
+  xtest <- read_csv(file = paste("./input/xtest_",which_version,".csv",sep = "") )
+  id_test <- xtest$ID; xtest$ID <- NULL
+  
+  set.seed(20150817)
+  idFix <-createDataPartition(y, times = 25, p = 0.1, list = T)
+  relevMat <- array(0, c(length(idFix), ncol(xtrain)))
+  for (ii in seq(idFix))
+  {
+      idx <- idFix[[ii]]
+      x0 <- xtrain[idx,]; y0 <- y[idx]
+      mod0 <- gbm.fit(x = x0, y = y0, n.trees = 100, interaction.depth = 12, shrinkage = 0.05,
+          distribution = "bernoulli", verbose = T)
+      relevMat[ii,] <-  summary(mod0, order = F, plot = F)[,2]
+      print(ii)
+  }
+  
+  # version 1: all non-zero
+  subset1 <- which(apply(relevMat,2,prod) != 0)
+  xtrain1 <- xtrain[,subset1]
+  xtest1 <- xtest[,subset1]
+  xtrain1$ID <- id_train; xtest$ID <- id_test
+  xtrain1$target <- y
+  write_csv(xtrain1, path = paste("./input/xtrain_",which_version,"_r1.csv", sep = "") )
+  write_csv(xtest1, path = paste("./input/xtest_",which_version,"_r1.csv", sep = "") )
+  
+  # version 2: at least one non-zero
+  subset1 <- which(apply(apply(relevMat,2,sign),2,sum) > 0.25 * length(idFix))
+  xtrain1 <- xtrain[,subset1]
+  xtest1 <- xtest[,subset1]
+  xtrain1$ID <- id_train; xtest1$ID <- id_test
+  xtrain1$target <- y
+  write_csv(xtrain1, path = paste("./input/xtrain_",which_version,"_r2.csv", sep = "") )
+  write_csv(xtest1, path = paste("./input/xtest_",which_version,"_r2.csv", sep = "") )
+}

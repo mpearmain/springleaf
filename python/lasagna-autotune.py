@@ -16,7 +16,8 @@ from nolearn.lasagne import NeuralNet
 if __name__ == "__main__":
     # Load data set and target values
     print("Loading Data sets")
-    train, train_labels, test, test_labels = make_data(train_path="./input/train.csv", test_path="./input/test.csv")
+    train, train_labels, test, test_labels = \
+        make_data(train_path="../input/xtrain_v1_r2.csv", test_path="../input/xtest_v1_r2.csv")
 
     num_classes = 2
     num_features = train.shape[1]

@@ -347,13 +347,16 @@ xtrain_fc <- xdat_fc[isTrain,]
 xtrain <- data.frame(xtrain, xtrain_fc)
 xtrain$ID <- id_train; xtrain$target <- y
 xvalid <- xtrain[isValid,]
+colnames(xvalid) <- str_replace_all(colnames(xvalid), "_", "")
 write_csv(xvalid, path = "./input/xvalid_v4.csv")
 xtrain <- xtrain[-isValid,]
+colnames(xtrain) <- str_replace_all(colnames(xtrain), "_", "")
 write_csv(xtrain, path = "./input/xtrain_v4.csv")
 
 
 xtest_fc <- xdat_fc[-isTrain,]
 xtest <- data.frame(xtest, xtest_fc)
 xtest$ID <- id_test
+colnames(xtest) <- str_replace_all(colnames(xtest), "_", "")
 write_csv(xtest, path = "./input/xtest_v4.csv")
 rm(xdat_fc, xtrain, xtrain_fc, xtest, xtest_fc)

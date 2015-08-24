@@ -36,31 +36,31 @@ def xgboostcv(max_depth,
                         objective="binary:logistic")
 
     # Run Kfolds on the data model to stop over-fitting
-    X_train, X_test, y_train, y_test = train_test_split(train,
+    X_train, X_valid, y_train, y_valid = train_test_split(train,
                                                         train_labels,
                                                         test_size=0.1,
                                                         random_state=seed)
-    xgb_model = clf.fit(X_train, y_train, eval_metric="auc")
-    y_pred = xgb_model.predict_proba(X_test)[:,1]
+    xgb_model = clf.fit(X_train, y_train, eval_metric="auc", eval_set=[(X_valid, y_valid)])
+    y_pred = xgb_model.predict_proba(X_valid)[:,1]
 
-    return auc(y_test, y_pred)
+    return auc(y_valid, y_pred)
 
 if __name__ == "__main__":
     # Load data set and target values
-    train, train_labels, test, test_labels = make_data(train_path = "../input/train.csv", test_path="../input/test.csv")
+    train, train_labels, test, test_labels = make_data(train_path = "../input/xtrain_r2.csv", test_path="../input/xtest_r2.csv")
 
     xgboostBO = BayesianOptimization(xgboostcv,
-                                     {'max_depth': (7, 15),
-                                      'learning_rate': (0.45, 0.2),
-                                      'n_estimators': (300, 1000),
-                                      'gamma': (1., 0.1),
-                                      'min_child_weight': (2, 15),
-                                      'max_delta_step': (0., 0.4),
-                                      'subsample': (0.7, 0.85),
-                                      'colsample_bytree': (0.7, 0.85)
+                                     {'max_depth': (5, 21),
+                                      'learning_rate': (0.26, 0.22),
+                                      'n_estimators': (478, 1000),
+                                      'gamma': (1., 0.01),
+                                      'min_child_weight': (2, 8),
+                                      'max_delta_step': (0., 0.1),
+                                      'subsample': (0.75, 0.85),
+                                      'colsample_bytree': (0.73, 0.85)
                                      })
 
-    xgboostBO.maximize(init_points=5, restarts=50, n_iter=10)
+    xgboostBO.maximize(init_points=5, restarts=50, n_iter=35)
     print('-' * 53)
 
     print('Final Results')
@@ -71,6 +71,10 @@ if __name__ == "__main__":
 
     seeds = [1234, 5434, 87897, 123125, 88888]
     for seed_bag in seeds:
+        X_train, X_valid, y_train, y_valid = train_test_split(train,
+                                                              train_labels,
+                                                              test_size=0.1,
+                                                              random_state=seed_bag)
         clf = XGBClassifier(max_depth=int(xgboostBO.res['max']['max_params']['max_depth']),
                                                learning_rate=xgboostBO.res['max']['max_params']['learning_rate'],
                                                n_estimators=int(xgboostBO.res['max']['max_params']['n_estimators']),
@@ -82,9 +86,9 @@ if __name__ == "__main__":
                                                seed=seed_bag,
                                                objective="binary:logistic")
 
-        clf.fit(train, train_labels, eval_metric="auc")
+        clf.fit(X_train, y_train, eval_metric="auc", eval_set=[(X_valid, y_valid)])
         print('Prediction Complete')
         preds = clf.predict_proba(test)[:, 1]
         submission = submission = pd.DataFrame(preds, index=test_labels, columns=['target'])
-        outfile_seed = '../output/xgb_autotune' + seed_bag + '.csv'
+        outfile_seed = '../output/xgb_autotune' + str(seed_bag) + '.csv'
         submission.to_csv(outfile_seed)

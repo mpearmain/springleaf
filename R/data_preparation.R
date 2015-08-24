@@ -235,7 +235,7 @@ write_csv(xtest, path = "./input/xtest_v2.csv")
 rm(xdat_fc, xtrain, xtrain_fc, xtest, xtest_fc)
 
 ## prepare dataset v3 ####
-# clean up factors => store for VW preparation
+# v2 without factors
 xtrain <- read_csv(file = "./input/train.csv")
 id_train <- xtrain$ID; xtrain$ID <- NULL
 y <- xtrain$target; xtrain$target <- NULL
@@ -263,3 +263,97 @@ xtrain$ID <- id_train; xtrain$target <- y
 write_csv(xtrain, path = "./input/xtrain_v3.csv")
 xtest$ID <- id_test
 write_csv(xtest, path = "./input/xtest_v3.csv")
+
+## prepare dataset v4 ####
+# clean factors => input for VW
+xtrain <- read_csv(file = "./input/train.csv")
+id_train <- xtrain$ID; xtrain$ID <- NULL
+y <- xtrain$target; xtrain$target <- NULL
+
+xtest <- read_csv(file = "./input/test.csv")
+id_test <- xtest$ID; xtest$ID <- NULL
+
+## preliminary preparation
+# drop constant columns
+is_missing <- colSums(is.na(xtrain))
+constant_columns <- which(is_missing == nrow(xtrain))
+xtrain <- xtrain[,-constant_columns]
+xtest <- xtest[,-constant_columns]
+rm(is_missing, constant_columns)
+
+# check column types
+is_missing <- which(colSums(is.na(xtrain)) > 0)
+xtrain[is.na(xtrain)] <- -1; xtest[is.na(xtest)] <- -1
+col_types <- unlist(lapply(xtrain, class))
+fact_cols <- which(col_types == "character")
+
+xtrain_fc <- xtrain[,fact_cols]; xtrain <- xtrain[, -fact_cols]
+xtest_fc <- xtest[,fact_cols]; xtest <- xtest[, -fact_cols]
+
+isTrain <- 1:nrow(xtrain_fc)
+xdat_fc <- rbind(xtrain_fc, xtest_fc); rm(xtrain_fc, xtest_fc)
+# first: true / false cases
+tf_columns <- c("VAR_0008","VAR_0009","VAR_0010","VAR_0011","VAR_0012",
+                "VAR_0043","VAR_0196","VAR_0226","VAR_0229","VAR_0230","VAR_0232","VAR_0236","VAR_0239")
+for (ff in tf_columns)
+{
+  x <- xdat_fc[,ff];   x[x == ""] <- "mis"
+  x <- factor(x);  xdat_fc[,ff] <- x 
+  msg(ff)
+}
+# alphanumeric generic columns
+an_columns <- c("VAR_0001","VAR_0005", "VAR_0044", "VAR_1934", "VAR_0202", "VAR_0222",
+                "VAR_0216","VAR_0283","VAR_0305","VAR_0325",
+                "VAR_0342","VAR_0352","VAR_0353","VAR_0354","VAR_0466","VAR_0467")
+for (ff in an_columns)
+{
+  x <- xdat_fc[,ff];   x[x == ""] <- "mis"; x[x == ""] <- "mis"
+  x <- factor(as.integer(factor(x)));  xdat_fc[,ff] <- x 
+  msg(ff)
+}
+# location columns
+loc_columns <- c("VAR_0237", "VAR_0274", "VAR_0200")
+for (ff in loc_columns)
+{
+  x <- xdat_fc[,ff];   x[x == ""] <- "mis"; x[x == ""] <- "mis"
+  x <- factor(x);  xdat_fc[,ff] <- x 
+  msg(ff)
+}
+# job columns
+job_columns <- c("VAR_0404", "VAR_0493")
+for (ff in job_columns)
+{
+  x <- xdat_fc[,ff];   x[x == ""] <- "mis"; x[x == ""] <- "mis"
+  x <- factor(x);  xdat_fc[,ff] <- x 
+  msg(ff)
+}
+# timestamp columns
+time_cols <- c("VAR_0073","VAR_0075","VAR_0156","VAR_0157","VAR_0158","VAR_0159",
+               "VAR_0166","VAR_0167","VAR_0168","VAR_0169","VAR_0176","VAR_0177",
+               "VAR_0178","VAR_0179","VAR_0204","VAR_0217")
+xdat_fc$missing_dates <- rowSums(xdat_fc[,time_cols] == "")
+# drop the time (leave date only) so you can actually see sth
+for (ff in time_cols)
+{
+  x <- xdat_fc[,ff];  x <- str_sub(x,0,-10) 
+  x[x == ""] <- "99JAN99"; xdat_fc[,ff] <- x
+}
+
+# output three chunks: train, validation and test
+# load the validation split
+xfolds <- read_csv(file = "./input/xfolds.csv")
+isValid <- which(xfolds$valid == 1)
+xtrain_fc <- xdat_fc[isTrain,]
+xtrain <- data.frame(xtrain, xtrain_fc)
+xtrain$ID <- id_train; xtrain$target <- y
+xvalid <- xtrain[isValid,]
+write_csv(xvalid, path = "./input/xvalid_v4.csv")
+xtrain <- xtrain[-isValid,]
+write_csv(xtrain, path = "./input/xtrain_v4.csv")
+
+
+xtest_fc <- xdat_fc[-isTrain,]
+xtest <- data.frame(xtest, xtest_fc)
+xtest$ID <- id_test
+write_csv(xtest, path = "./input/xtest_v4.csv")
+rm(xdat_fc, xtrain, xtrain_fc, xtest, xtest_fc)

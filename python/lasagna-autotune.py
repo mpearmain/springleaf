@@ -14,7 +14,7 @@ from theano import shared
 from lasagne.layers import DenseLayer
 from lasagne.layers import InputLayer
 from lasagne.layers import DropoutLayer
-from lasagne.nonlinearities import softmax
+from lasagne.nonlinearities import sigmoid, softmax
 from lasagne.objectives import binary_crossentropy
 from lasagne.updates import nesterov_momentum
 from nolearn.lasagne import NeuralNet
@@ -80,6 +80,7 @@ def load_test_data(path, scaler):
     print("Loading Test Data")
     df = pd.read_csv(path)
     ids = df.ID.astype(str)
+
     df = df.drop('ID',1)
     X = df.values.copy()
 
@@ -91,38 +92,44 @@ if __name__ == "__main__":
 
     # Load data set and target values
 
-    X, y, encoder, scaler = load_train_data("../input/xtrain_v1_r2.csv")
-    X_test, ids = load_test_data("../input/xtest_v1_r2.csv", scaler)
+    X, y, encoder, scaler = load_train_data("../input/xtrain_v2_r2.csv")
+    X_test, ids = load_test_data("../input/xtest_v2_r2.csv", scaler)
+    print('Number of classes:', len(encoder.classes_))
     num_classes = len(encoder.classes_)
     num_features = X.shape[1]
 
     layers0 = [('input', InputLayer),
                ('dense0', DenseLayer),
-               ('dropout', DropoutLayer),
+               ('dropout0', DropoutLayer),
                ('dense1', DenseLayer),
+               ('dropout1', DropoutLayer),
+               ('dense2', DenseLayer),
                ('output', DenseLayer)]
 
     net0 = NeuralNet(layers=layers0,
 
                      input_shape=(None, num_features),
-                     dense0_num_units=96,
-                     dropout_p=0.3,
-                     dense1_num_units=42,
+                     dense0_num_units=313,
+                     dropout0_p=0.1,
+                     dense1_num_units=313,
+                     dropout1_p=0.8,
+                     dense2_num_units=39,
+
                      output_num_units=num_classes,
                      output_nonlinearity=softmax,
 
                      update=nesterov_momentum,
-                     update_learning_rate=shared(float32(0.01)),
+                     update_learning_rate=shared(float32(0.1)),
                      update_momentum=shared(float32(0.9)),
                      on_epoch_finished=[
-                        AdjustVariable('update_learning_rate', start=0.01, stop=0.005),
-                        AdjustVariable('update_momentum', start=0.9, stop=0.999),
-                        EarlyStopping(patience=5),
+                        AdjustVariable('update_learning_rate', start=0.3, stop=0.05),
+                        AdjustVariable('update_momentum', start=0.8, stop=0.999),
+                        EarlyStopping(patience=10),
                      ],
 
                      train_split=TrainSplit(0.1),
                      verbose=1,
-                     max_epochs=10)
+                     max_epochs=100)
 
     net0.fit(X, y)
     print('Prediction Complete')

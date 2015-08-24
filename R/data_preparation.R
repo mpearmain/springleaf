@@ -324,7 +324,7 @@ job_columns <- c("VAR_0404", "VAR_0493")
 for (ff in job_columns)
 {
   x <- xdat_fc[,ff];   x[x == ""] <- "mis"; x[x == ""] <- "mis"
-  x <- factor(x);  xdat_fc[,ff] <- x 
+  x <- factor(as.integer(factor(x)));  xdat_fc[,ff] <- x 
   msg(ff)
 }
 # timestamp columns

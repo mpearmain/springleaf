@@ -10,11 +10,13 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler
 
 from theano import shared
+from theano import tensor as T
+from theano.tensor.nnet import sigmoid
 
 from lasagne.layers import DenseLayer
 from lasagne.layers import InputLayer
 from lasagne.layers import DropoutLayer
-from lasagne.nonlinearities import sigmoid, softmax
+from lasagne.nonlinearities import softmax
 from lasagne.objectives import binary_crossentropy
 from lasagne.updates import nesterov_momentum
 from nolearn.lasagne import NeuralNet
@@ -69,7 +71,7 @@ def load_train_data(path):
 
     np.random.shuffle(X)
 
-    X, = X.astype(np.float32),
+    X = X.astype(np.float32)
     encoder = LabelEncoder()
     y = encoder.fit_transform(labels).astype(np.int32)
     scaler = StandardScaler()
@@ -92,8 +94,8 @@ if __name__ == "__main__":
 
     # Load data set and target values
 
-    X, y, encoder, scaler = load_train_data("../input/xtrain_v2_r2.csv")
-    X_test, ids = load_test_data("../input/xtest_v2_r2.csv", scaler)
+    X, y, encoder, scaler = load_train_data("../input/train.csv")
+    X_test, ids = load_test_data("../input/test.csv", scaler)
     print('Number of classes:', len(encoder.classes_))
     num_classes = len(encoder.classes_)
     num_features = X.shape[1]
@@ -112,24 +114,24 @@ if __name__ == "__main__":
                      dense0_num_units=313,
                      dropout0_p=0.1,
                      dense1_num_units=313,
-                     dropout1_p=0.8,
+                     dropout1_p=0.1,
                      dense2_num_units=39,
 
                      output_num_units=num_classes,
                      output_nonlinearity=softmax,
 
                      update=nesterov_momentum,
-                     update_learning_rate=shared(float32(0.1)),
-                     update_momentum=shared(float32(0.9)),
+                     update_learning_rate=shared(float32(0.3)),
+                     update_momentum=shared(float32(0.8)),
                      on_epoch_finished=[
-                        AdjustVariable('update_learning_rate', start=0.3, stop=0.05),
+                        AdjustVariable('update_learning_rate', start=0.3, stop=0.1),
                         AdjustVariable('update_momentum', start=0.8, stop=0.999),
                         EarlyStopping(patience=10),
                      ],
 
                      train_split=TrainSplit(0.1),
                      verbose=1,
-                     max_epochs=100)
+                     max_epochs=10)
 
     net0.fit(X, y)
     print('Prediction Complete')

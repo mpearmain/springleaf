@@ -9,7 +9,7 @@ from python.make_data import make_data
 
 if __name__ == "__main__":
     # Load data set and target values
-    train, train_labels, test, test_labels = make_data(train_path = "../input/train.csv", test_path="../input/test.csv")
+    train, train_labels, test, test_labels = make_data(train_path = "./input/train.csv", test_path="../input/test.csv")
     automl = autosklearn.AutoSklearnClassifier()
     automl.fit(train, train_labels)
     print automl.score(test, test_labels)

@@ -48,7 +48,7 @@ def xgboostcv(max_depth,
 if __name__ == "__main__":
     # Load data set and target values
     train, train_labels, test, test_labels = \
-        make_data(train_path = "../input/xtrain_v5.csv", test_path="../input/xtest_v5.csv")
+        make_data(train_path = "../input/xtrain_v5_full.csv", test_path="../input/xtest_v5.csv")
 
     xgboostBO = BayesianOptimization(xgboostcv,
                                      {'max_depth': (12, 25),

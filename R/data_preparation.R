@@ -23,20 +23,6 @@ auc<-function (actual, predicted) {
   
 }
 
-# helper function for extracting max year < 99
-extractYear <- function(vec)
-{
-  vec <- as.character(vec)
-  x <- as.integer(str_sub(vec,-2))
-  x <- x[x < 99]
-  m <- max(x)
-  if (is.infinite(m))
-  {
-    m <- 99
-  }
-  return(m)
-}
-
 ## prepare dataset v1 ####
 # all numbers => good basis for VW
 # also: feed to Python gbm!
@@ -353,3 +339,4 @@ xtest$ID <- id_test
 colnames(xtest) <- str_replace_all(colnames(xtest), "_", "")
 write_csv(xtest, path = "./input/xtest_v5.csv")
 rm(xdat_fc, xtrain, xtrain_fc, xtest, xtest_fc)
+

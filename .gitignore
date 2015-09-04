@@ -17,3 +17,4 @@ vignettes/*.pdf
 springleaf.Rproj
 /output
 submissions/
+.DS_Store

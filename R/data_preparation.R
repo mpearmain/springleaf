@@ -4,6 +4,7 @@ require(caret)
 require(readr)
 require(doParallel)
 require(stringr)
+require(lubridate)
 
 ## extra functions ####
 # print a formatted message
@@ -95,23 +96,23 @@ xtrain <- xtrain[,-constant_columns]; xtest <- xtest[,-constant_columns]
 ## check correlated pairs
 {
   {
-    # corr_pairs <- array(1,c(1,2))
-    # for (which_column in 1:ncol(xtrain))
-    # {
-    #   cor_vec <- rep(0, ncol(xtrain))
-    #   for (ii in 1:ncol(xtrain))  cor_vec[ii] <- cor(xtrain[,which_column], xtrain[,ii])
-    #   cor_vec[which_column] <- 0
-    #   dep_columns <- which(abs(cor_vec) > 0.95)
-    #   if (length(dep_columns))
-    #   {
-    #     ref_columns <- rep(which_column, length(dep_columns))
-    #     x <- cbind(ref_columns, dep_columns)  
-    #     corr_pairs <- rbind(corr_pairs, x)
-    #   }
-    #   msg(which_column)
-    # }
+    corr_pairs <- array(1,c(1,2))
+    for (which_column in 1:ncol(xtrain))
+    {
+      cor_vec <- rep(0, ncol(xtrain))
+      for (ii in 1:ncol(xtrain))  cor_vec[ii] <- cor(xtrain[,which_column], xtrain[,ii])
+      cor_vec[which_column] <- 0
+      dep_columns <- which(abs(cor_vec) > 0.95)
+      if (length(dep_columns))
+      {
+        ref_columns <- rep(which_column, length(dep_columns))
+        x <- cbind(ref_columns, dep_columns)  
+        corr_pairs <- rbind(corr_pairs, x)
+      }
+      msg(which_column)
+    }
   }
-  corr_pairs <- read_csv(file = "./input/raw_correlated_pairs.csv")
+  #corr_pairs <- read_csv(file = "./input/raw_correlated_pairs.csv")
   corr_pairs <- corr_pairs[corr_pairs[,1] > corr_pairs[,2],]
   corr_value <- rep(0, nrow(corr_pairs))
   for (ii in 1:nrow(corr_pairs))
@@ -240,7 +241,8 @@ isTrain <- 1:nrow(xtrain_fc); xdat_fc <- rbind(xtrain_fc, xtest_fc); rm(xtrain_f
 # true / false cases
 {
   tf_columns <- c("VAR_0008","VAR_0009","VAR_0010","VAR_0011","VAR_0012",
-                  "VAR_0043","VAR_0196","VAR_0226","VAR_0229","VAR_0230","VAR_0232","VAR_0236","VAR_0239")
+                  "VAR_0043","VAR_0196","VAR_0226","VAR_0229","VAR_0230",
+                  "VAR_0232","VAR_0236","VAR_0239")
   for (ff in tf_columns)
   {
     x <- xdat_fc[,ff];   x[x == ""] <- "mis"
@@ -320,14 +322,21 @@ xtrain <- data.frame(xtrain, xtrain_fc); rm(xtrain_fc)
 # full test set
 xtest_fc <- xdat_fc[-isTrain,]
 colnames(xtest_fc)[true_fac] <- paste("fac", colnames(xtest_fc)[true_fac] , sep = "")
-xtest <- data.frame(xtest, xtest_fc); rm(xtest_fc)
+xtest <- data.frame(xtest, xtest_fc)
+rm(xtest_fc)
 
 # output three chunks: train, validation and test
-# store pure train set
+
 # load the validation split
 xfolds <- read_csv(file = "./input/xfolds.csv")
 isValid <- which(xfolds$valid == 1)
-xtrain$ID <- id_train; xtrain$target <- y
+xtrain$ID <- id_train 
+xtrain$target <- y
+
+# store pure train set
+colnames(xtrain) <- str_replace_all(colnames(xtrain), "_", "")
+write_csv(xtrain, path = "./input/xtrain_v5_full.csv")
+
 xvalid <- xtrain[isValid,]
 colnames(xvalid) <- str_replace_all(colnames(xvalid), "_", "")
 write_csv(xvalid, path = "./input/xvalid_v5.csv")
@@ -338,5 +347,8 @@ write_csv(xtrain, path = "./input/xtrain_v5.csv")
 xtest$ID <- id_test
 colnames(xtest) <- str_replace_all(colnames(xtest), "_", "")
 write_csv(xtest, path = "./input/xtest_v5.csv")
+<<<<<<< HEAD
 rm(xdat_fc, xtrain, xtrain_fc, xtest, xtest_fc)
 
+=======
+>>>>>>> 07169bd7ba8be31369dad74dfe725d472b24cc31

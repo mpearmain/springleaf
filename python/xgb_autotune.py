@@ -37,30 +37,31 @@ def xgboostcv(max_depth,
 
     # Run Kfolds on the data model to stop over-fitting
     X_train, X_valid, y_train, y_valid = train_test_split(train,
-                                                        train_labels,
-                                                        test_size=0.1,
-                                                        random_state=seed)
-    xgb_model = clf.fit(X_train, y_train, eval_metric="auc", eval_set=[(X_valid, y_valid)])
+                                                          train_labels,
+                                                          test_size=0.1,
+                                                          random_state=seed)
+    xgb_model = clf.fit(X_train, y_train, eval_metric="auc", eval_set=[(X_valid, y_valid)], early_stopping_rounds=20)
     y_pred = xgb_model.predict_proba(X_valid)[:,1]
 
     return auc(y_valid, y_pred)
 
 if __name__ == "__main__":
     # Load data set and target values
-    train, train_labels, test, test_labels = make_data(train_path = "../input/xtrain_r2.csv", test_path="../input/xtest_r2.csv")
+    train, train_labels, test, test_labels = \
+        make_data(train_path = "../input/xtrain_v5_full.csv", test_path="../input/xtest_v5.csv")
 
     xgboostBO = BayesianOptimization(xgboostcv,
-                                     {'max_depth': (5, 21),
-                                      'learning_rate': (0.26, 0.22),
-                                      'n_estimators': (478, 1000),
+                                     {'max_depth': (12, 25),
+                                      'learning_rate': (0.3, 0.01),
+                                      'n_estimators': (478, 1500),
                                       'gamma': (1., 0.01),
-                                      'min_child_weight': (2, 8),
+                                      'min_child_weight': (5, 12),
                                       'max_delta_step': (0., 0.1),
                                       'subsample': (0.75, 0.85),
                                       'colsample_bytree': (0.73, 0.85)
                                      })
 
-    xgboostBO.maximize(init_points=5, restarts=50, n_iter=35)
+    xgboostBO.maximize(init_points=7, restarts=50, n_iter=20)
     print('-' * 53)
 
     print('Final Results')
@@ -86,7 +87,7 @@ if __name__ == "__main__":
                                                seed=seed_bag,
                                                objective="binary:logistic")
 
-        clf.fit(X_train, y_train, eval_metric="auc", eval_set=[(X_valid, y_valid)])
+        clf.fit(X_train, y_train, eval_metric="auc", eval_set=[(X_valid, y_valid)], early_stopping_rounds=20)
         print('Prediction Complete')
         preds = clf.predict_proba(test)[:, 1]
         submission = submission = pd.DataFrame(preds, index=test_labels, columns=['target'])

@@ -124,7 +124,7 @@ xtrain <- xtrain[,-constant_columns]; xtest <- xtest[,-constant_columns]
   corr_pairs <- data.frame(corr_pairs, corr_value)
   
   # duplicate columns - for now drop everything that is too highly correlated
-  duplicate_columns <- unique(corr_pairs$ref_columns[corr_pairs$corr_value > 0.99])
+  duplicate_columns <- unique(corr_pairs$ref_columns[corr_pairs$corr_value > 0.95])
   xtrain <- xtrain[,-duplicate_columns]
   xtest <- xtest[,-duplicate_columns]
 

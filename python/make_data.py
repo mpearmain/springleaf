@@ -29,8 +29,8 @@ def make_data(train_path, test_path):
         big_X[feature] = le.fit_transform(big_X[feature])
 
     # Prepare the inputs for the model
-    x_train = big_X[0:x_train.shape[0]].as_matrix()
-    x_test = big_X[x_train.shape[0]::].as_matrix()
+    x_train = big_X[0:x_train.shape[0]] #.as_matrix()
+    x_test = big_X[x_train.shape[0]::] #.as_matrix()
 
     print("Shape of x_train:", np.shape(x_train))
     print("Shape of y_train:", np.shape(y_train))

@@ -69,49 +69,49 @@ xtrain[is.na(xtrain)] <- -1; xtest[is.na(xtest)] <- -9.999900e+04
   
   # identify highly correlated pairs
   {
-  #     corr_pairs <- array(1,c(1,2))
-  #     for (which_column in 1:ncol(xtrain))
-  #     {
-  #       cor_vec <- unlist(lapply(xtrain, function(s) cor(xtrain[,which_column],s)))
-  #       cor_vec[which_column] <- 0
-  #       dep_columns <- which(abs(cor_vec) > 0.95)
-  #       if (length(dep_columns))
-  #       {
-  #         ref_columns <- rep(which_column, length(dep_columns))
-  #         x <- cbind(ref_columns, dep_columns)  
-  #         corr_pairs <- rbind(corr_pairs, x)
-  #         print("corr found")
-  #       }
-  #       msg(which_column)
-  #       # trim along the way
-  #       if ((which_column %% 50) == 0)
-  #       {
-  #         corr_pairs <- corr_pairs[corr_pairs[,1] > corr_pairs[,2],]
-  #       }
-  #     }
-  #     rm(which_column)
-  #     # map the numbers to names
-  #     ref_name <- colnames(xtrain)[corr_pairs[,1]]
-  #     dep_name <- colnames(xtrain)[corr_pairs[,2]]
-  #     corr_pairs <- data.frame(corr_pairs, ref_name, dep_name)
-  #     rm(ref_name, dep_name)
-  #     
-  #     # amend with the correlation numbers
-  #     corr_value <- rep(0, nrow(corr_pairs))
-  #     for (ii in 1:nrow(corr_pairs))
-  #     {
-  #       corr_value[ii] <- cor(xtrain[,corr_pairs[ii,1]], xtrain[,corr_pairs[ii,2]])
-  #       if ((ii %% 1000) == 0) msg(ii)
-  #     }
-  #     # match with actual correlations
-  #     corr_pairs <- data.frame(corr_pairs, corr_value)
-  #     rm(corr_value)
-  #     # store the intermediate file
-  #     write_csv(corr_pairs, path = "./input/correlated_pairs.csv")
-  #     
-  #     
+      corr_pairs <- array(1,c(1,2))
+      for (which_column in 1:ncol(xtrain))
+      {
+        cor_vec <- unlist(lapply(xtrain, function(s) cor(xtrain[,which_column],s)))
+        cor_vec[which_column] <- 0
+        dep_columns <- which(abs(cor_vec) > 0.95)
+        if (length(dep_columns))
+        {
+          ref_columns <- rep(which_column, length(dep_columns))
+          x <- cbind(ref_columns, dep_columns)  
+          corr_pairs <- rbind(corr_pairs, x)
+          print("corr found")
+        }
+        msg(which_column)
+        # trim along the way
+        if ((which_column %% 50) == 0)
+        {
+          corr_pairs <- corr_pairs[corr_pairs[,1] > corr_pairs[,2],]
+        }
+      }
+      rm(which_column)
+      # map the numbers to names
+      ref_name <- colnames(xtrain)[corr_pairs[,1]]
+      dep_name <- colnames(xtrain)[corr_pairs[,2]]
+      corr_pairs <- data.frame(corr_pairs, ref_name, dep_name)
+      rm(ref_name, dep_name)
+      
+      # amend with the correlation numbers
+      corr_value <- rep(0, nrow(corr_pairs))
+      for (ii in 1:nrow(corr_pairs))
+      {
+        corr_value[ii] <- cor(xtrain[,corr_pairs[ii,1]], xtrain[,corr_pairs[ii,2]])
+        if ((ii %% 1000) == 0) msg(ii)
+      }
+      # match with actual correlations
+      corr_pairs <- data.frame(corr_pairs, corr_value)
+      rm(corr_value)
+      # store the intermediate file
+      write_csv(corr_pairs, path = "./input/correlated_pairs.csv")
+      
+      
 }
-  corr_pairs <- read_csv(file = "./input/raw_correlated_pairs.csv")
+  #corr_pairs <- read_csv(file = "./input/raw_correlated_pairs.csv")
 
   # suspicious columns - evaluate adequacy of pairwise differences of correlated ones
   xsum <- xdiff <- rep(0, nrow(corr_pairs))

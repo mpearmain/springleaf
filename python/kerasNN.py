@@ -3,15 +3,15 @@ from __future__ import division
 
 import pandas as pd
 import numpy as np
-
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler
-from make_data import make_data
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
 from keras.utils import np_utils
 from sklearn import metrics
 from sklearn.cross_validation import KFold
+
+from make_data import make_data_scaled_one_hot
 
 
 '''
@@ -28,15 +28,15 @@ def float32(k):
 
 def build_model(input_dim, output_dim):
     model = Sequential()
-    model.add(Dense(input_dim, 320, init='lecun_uniform'))
+    model.add(Dense(input_dim, 2010, init='lecun_uniform'))
     model.add(Activation('relu'))
     model.add(Dropout(0.5))
 
-    model.add(Dense(320, 320, init='lecun_uniform'))
+    model.add(Dense(2010, 1040, init='lecun_uniform'))
     model.add(Activation('relu'))
     model.add(Dropout(0.5))
 
-    model.add(Dense(320, output_dim, init='lecun_uniform'))
+    model.add(Dense(2010, output_dim, init='lecun_uniform'))
     model.add(Activation('sigmoid'))
 
     model.compile(loss='binary_crossentropy', optimizer="adadelta")
@@ -46,7 +46,7 @@ def build_model(input_dim, output_dim):
 if __name__ == "__main__":
     # Load data set and target values
     x_train, Y, X_test, ids = \
-        make_data(train_path = "../input/xtrain_v5_full.csv",
+        make_data_scaled_one_hot(train_path = "../input/xtrain_v5_full.csv",
                   test_path="../input/xtest_v5.csv")
 
     np.random.shuffle(x_train)

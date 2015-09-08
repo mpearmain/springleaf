@@ -7,6 +7,8 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
+from keras.layers.normalization import BatchNormalization
+from keras.layers.advanced_activations import PReLU
 from keras.utils import np_utils
 from sklearn import metrics
 from sklearn.cross_validation import KFold
@@ -28,19 +30,23 @@ def float32(k):
 
 def build_model(input_dim, output_dim):
     model = Sequential()
-    model.add(Dense(input_dim, 2010, init='lecun_uniform'))
-    model.add(Activation('relu'))
+    model.add(Dropout(0.1))
+    model.add(Dense(input_dim, 15000, init='he_normal'))
+    model.add(PReLU((15000,)))
+    model.add(BatchNormalization((15000,)))
     model.add(Dropout(0.5))
 
-    model.add(Dense(2010, 1040, init='lecun_uniform'))
-    model.add(Activation('relu'))
+    model.add(Dense(15000, 1500, init='he_normal'))
+    model.add(PReLU((1500,)))
+    model.add(BatchNormalization((1500,)))
     model.add(Dropout(0.5))
 
-    model.add(Dense(1040, 1040, init='lecun_uniform'))
-    model.add(Activation('relu'))
+    model.add(Dense(1500, 1500, init='he_normal'))
+    model.add(PReLU((1500,)))
+    model.add(BatchNormalization((1500,)))
     model.add(Dropout(0.5))
 
-    model.add(Dense(1040, output_dim, init='lecun_uniform'))
+    model.add(Dense(1500, output_dim, init='he_normal'))
     model.add(Activation('sigmoid'))
 
     model.compile(loss='binary_crossentropy', optimizer="adadelta")
@@ -98,8 +104,8 @@ if __name__ == "__main__":
 
         print("Training model...")
 
-        model.fit(X_train, Y_train, nb_epoch=10, batch_size=16,
-                  validation_data=(X_valid, Y_valid), verbose=0)
+        model.fit(X_train, Y_train, nb_epoch=10, batch_size=128,
+                  validation_data=(X_valid, Y_valid), verbose=1)
         valid_preds = model.predict_proba(X_valid, verbose=0)
         valid_preds = valid_preds[:, 1]
         roc = metrics.roc_auc_score(y_valid, valid_preds)
@@ -111,7 +117,7 @@ if __name__ == "__main__":
     print("Generating submission...")
 
     model = build_model(input_dim, output_dim)
-    model.fit(x_train, Y, nb_epoch=10, batch_size=16, verbose=0)
+    model.fit(x_train, Y, nb_epoch=20, batch_size=128)
 
     preds = model.predict_proba(X_test, verbose=0)[:, 1]
     submission = pd.DataFrame(preds, index=ids, columns=['target'])

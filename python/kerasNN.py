@@ -31,15 +31,15 @@ def float32(k):
 def build_model(input_dim, output_dim):
     model = Sequential()
     model.add(Dropout(0.1))
-    model.add(Dense(input_dim, 15000, init='he_normal'))
-    model.add(PReLU((15000,)))
-    model.add(BatchNormalization((15000,)))
-    model.add(Dropout(0.5))
+    model.add(Dense(input_dim, 2000, init='he_normal'))
+    model.add(PReLU((2000,)))
+    model.add(BatchNormalization((2000,)))
+    model.add(Dropout(0.3))
 
-    model.add(Dense(15000, 1500, init='he_normal'))
+    model.add(Dense(2000, 1500, init='he_normal'))
     model.add(PReLU((1500,)))
     model.add(BatchNormalization((1500,)))
-    model.add(Dropout(0.5))
+    model.add(Dropout(0.3))
 
     model.add(Dense(1500, 1500, init='he_normal'))
     model.add(PReLU((1500,)))
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     print("Validation...")
 
     nb_folds = 4
-    kfolds = KFold(len(y), nb_folds)
+    kfolds = KFold(len(y), nb_folds,shuffle=True, random_state=1234)
     av_roc = 0.
     f = 0
     for train, valid in kfolds:
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
         print("Training model...")
 
-        model.fit(X_train, Y_train, nb_epoch=10, batch_size=128,
+        model.fit(X_train, Y_train, nb_epoch=100, batch_size=128,
                   validation_data=(X_valid, Y_valid), verbose=1)
         valid_preds = model.predict_proba(X_valid, verbose=0)
         valid_preds = valid_preds[:, 1]
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     print("Generating submission...")
 
     model = build_model(input_dim, output_dim)
-    model.fit(x_train, Y, nb_epoch=20, batch_size=128)
+    model.fit(x_train, Y, nb_epoch=100, batch_size=128)
 
     preds = model.predict_proba(X_test, verbose=0)[:, 1]
     submission = pd.DataFrame(preds, index=ids, columns=['target'])

@@ -67,23 +67,27 @@ def make_data_scaled_one_hot(train_path, test_path):
     fac_columns = filter(lambda x: 'fac' in x, names)
 
     # Remove facVAR###dmp cols from list
-    nonnumeric_columns = filter(lambda x: 'dmp' not in x, fac_columns)
+    # nonnumeric_columns = filter(lambda x: 'dmp' not in x, fac_columns)
 
     # Join the features from train and test together.
     big_X = x_train[names].append(test[names])
+    # Drop all but dmp cols
+    dmp_cols = filter(lambda x: 'dmp' not in x, fac_columns)
+    for feature in list(set(names) - set(dmp_cols)):
+        big_X = big_X.drop(feature,1)
 
     # Rescale all numeric cols to be between 0 and 1.
     min_max_scaler = MinMaxScaler()
-    for feature in list(set(names) - set(nonnumeric_columns)):
+    for feature in dmp_cols:
         big_X[feature] = min_max_scaler.fit_transform(big_X[feature])
 
     # One hot encode the categorical vars in place.
-    big_X, _ = one_hot_dataframe(big_X, cols=nonnumeric_columns,replace=True)
+    #big_X, _ = one_hot_dataframe(big_X, cols=nonnumeric_columns,replace=True)
 
     # Scale all
-    le = LabelEncoder()
-    for feature in nonnumeric_columns:
-        big_X[feature] = le.fit_transform(big_X[feature])
+    # le = LabelEncoder()
+    # for feature in nonnumeric_columns:
+    #     big_X[feature] = le.fit_transform(big_X[feature])
 
 
     # Prepare the inputs for the model

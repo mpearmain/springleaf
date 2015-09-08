@@ -108,8 +108,6 @@ xtrain[is.na(xtrain)] <- -1; xtest[is.na(xtest)] <- -9.999900e+04
       rm(corr_value)
       # store the intermediate file
       write_csv(corr_pairs, path = "./input/correlated_pairs.csv")
-      
-      
 }
   #corr_pairs <- read_csv(file = "./input/raw_correlated_pairs.csv")
 
@@ -415,8 +413,6 @@ isTrain <- 1:nrow(xtrain_fc); xdat_fc <- rbind(xtrain_fc, xtest_fc); rm(xtrain_f
   # drop the factors
   
   # SFSG # 
-  
-  
   
 ##  output formatted datasets ####
 # store pure train set

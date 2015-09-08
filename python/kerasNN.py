@@ -46,10 +46,11 @@ def build_model(input_dim, output_dim):
 if __name__ == "__main__":
     # Load data set and target values
     x_train, Y, X_test, ids = \
-        make_data_scaled_one_hot(train_path = "../input/xtrain_v5_full.csv",
-                  test_path="../input/xtest_v5.csv")
+        make_data_scaled_one_hot(train_path = "../input/xtrain_v6.csv",
+                  test_path="../input/xtest_v6.csv")
 
-    np.random.shuffle(x_train)
+    print(x_train.shape)
+    #np.random.shuffle(x_train)
 
     x_train = x_train.astype(np.float32)
     encoder = LabelEncoder()

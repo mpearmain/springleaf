@@ -36,7 +36,11 @@ def build_model(input_dim, output_dim):
     model.add(Activation('relu'))
     model.add(Dropout(0.5))
 
-    model.add(Dense(2010, output_dim, init='lecun_uniform'))
+    model.add(Dense(1040, 1040, init='lecun_uniform'))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.5))
+
+    model.add(Dense(1040, output_dim, init='lecun_uniform'))
     model.add(Activation('sigmoid'))
 
     model.compile(loss='binary_crossentropy', optimizer="adadelta")

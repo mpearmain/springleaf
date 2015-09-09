@@ -31,22 +31,22 @@ def float32(k):
 def build_model(input_dim, output_dim):
     model = Sequential()
     model.add(Dropout(0.1))
-    model.add(Dense(input_dim, 2000, init='he_normal'))
-    model.add(PReLU((2000,)))
-    model.add(BatchNormalization((2000,)))
+    model.add(Dense(input_dim, 1999, init='glorot_uniform'))
+    model.add(PReLU((1999,)))
+    #model.add(BatchNormalization((1999,)))
     model.add(Dropout(0.3))
 
-    model.add(Dense(2000, 1500, init='he_normal'))
+    model.add(Dense(1999, 1500, init='glorot_uniform'))
     model.add(PReLU((1500,)))
-    model.add(BatchNormalization((1500,)))
+    #model.add(BatchNormalization((1500,)))
     model.add(Dropout(0.3))
 
-    model.add(Dense(1500, 1500, init='he_normal'))
-    model.add(PReLU((1500,)))
-    model.add(BatchNormalization((1500,)))
+    model.add(Dense(1500, 500, init='glorot_uniform'))
+    model.add(PReLU((500,)))
+    #model.add(BatchNormalization((1500,)))
     model.add(Dropout(0.5))
 
-    model.add(Dense(1500, output_dim, init='he_normal'))
+    model.add(Dense(500, output_dim, init='glorot_uniform'))
     model.add(Activation('sigmoid'))
 
     model.compile(loss='binary_crossentropy', optimizer="adadelta")
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
         print("Training model...")
 
-        model.fit(X_train, Y_train, nb_epoch=100, batch_size=128,
+        model.fit(X_train, Y_train, nb_epoch=8, batch_size=24,
                   validation_data=(X_valid, Y_valid), verbose=1)
         valid_preds = model.predict_proba(X_valid, verbose=0)
         valid_preds = valid_preds[:, 1]
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     print("Generating submission...")
 
     model = build_model(input_dim, output_dim)
-    model.fit(x_train, Y, nb_epoch=100, batch_size=128)
+    model.fit(x_train, Y, nb_epoch=8, batch_size=24)
 
     preds = model.predict_proba(X_test, verbose=0)[:, 1]
     submission = pd.DataFrame(preds, index=ids, columns=['target'])

@@ -64,25 +64,30 @@ def make_data_scaled_one_hot(train_path, test_path):
 
     # Use Label str cols.
     names = list(x_train.columns.values)
-    fac_columns = filter(lambda x: 'fac' in x, names)
+    fac_columns = filter(lambda x: 'dmp' in x, names)
+    diff_columns = filter(lambda x: 'diff' in x, names)
+    sum_columns = filter(lambda x: 'sum' in x, names)
+
+    proc = set()
+    proc.update(fac_columns)
+    proc.update(diff_columns)
+    proc.update(sum_columns)
 
     # Remove facVAR cols from list
-    nonnumeric_columns = filter(lambda x: 'dmp' not in x, fac_columns)
-
+    nonnumeric_columns = filter(lambda x: 'fac' in x, names)
+    nonnumeric_columns = filter(lambda x: 'dmp' not in x, nonnumeric_columns)
     # Join the features from train and test together.
     big_X = x_train[names].append(test[names])
-    # Drop all but dmp cols
+    print("Shape of Data bfore dropping cols:", np.shape(big_X))
     big_X = big_X.drop(nonnumeric_columns, 1)
-
-    #dmp_cols = filter(lambda x: 'dmp' in x, fac_columns)
-    #big_X = big_X.drop(list(set(names) - set(dmp_cols)), 1)
+    #big_X = big_X.drop(list(set(list(big_X.columns.values)) - set(proc)), 1)
 
     print("Shape of Data after dropping cols:", np.shape(big_X))
     # Rescale all numeric cols to be between 0 and 1.
     names = list(big_X.columns.values)
-    scaler = MinMaxScaler()
-    for feature in names:
-        big_X[feature] = scaler.fit_transform(big_X[feature])
+    # scaler = MinMaxScaler()
+    # for feature in names:
+    #     big_X[feature] = scaler.fit_transform(big_X[feature])
 
     # One hot encode the categorical vars in place.
     #big_X, _ = one_hot_dataframe(big_X, cols=nonnumeric_columns,replace=True)

@@ -6,7 +6,6 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
-from keras.layers.normalization import BatchNormalization
 from keras.layers.advanced_activations import PReLU
 from keras.utils import np_utils
 from sklearn import metrics
@@ -21,6 +20,11 @@ from make_data import make_data_keras
 
     The model trains in a few seconds on CPU.
 '''
+
+
+
+
+
 
 
 def float32(k):

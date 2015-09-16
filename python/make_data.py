@@ -5,26 +5,13 @@ __author__ = 'michael.pearmain'
 
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.feature_extraction import DictVectorizer
+from sklearn.preprocessing import LabelEncoder, StandardScaler, OneHotEncoder
+
 
 ''' Below are two functions for creating data,
  make_data() converts data for using with xgboost and other sklearn functions
  make_data_keras() is specific to keras NN
 '''
-
-def one_hot_dataframe(data, cols, replace=False):
-    """ Takes a dataframe and a list of columns that need to be encoded.
-    Returns a 2-tuple comprising of the data, the vectorized data.
-    """
-    vec = DictVectorizer()
-    vecData = pd.DataFrame(vec.fit_transform(data[cols].to_dict(orient='records')).toarray())
-    vecData.columns = vec.get_feature_names()
-    vecData.index = data.index
-    if replace is True:
-        data = data.drop(cols, axis=1)
-        data = data.join(vecData)
-    return (data, vecData)
 
 def make_data(train_path, test_path):
     train = pd.read_csv(train_path).set_index("ID")
@@ -72,7 +59,7 @@ def make_data_keras(train_path, test_path):
     names = x_train.columns.values
     # Join the features from train and test together.
     big_X = x_train[names].append(test[names])
-    print("Shape of Data bfore dropping cols:", np.shape(big_X))
+    print("Shape of Data before dropping cols:", np.shape(big_X))
 
     # Remove facVAR cols from data but keep the facVARdmp vars to model them.
     # One-hot encoding the categorical data produces huge data bloat
@@ -80,14 +67,30 @@ def make_data_keras(train_path, test_path):
     nonnumeric_columns = filter(lambda x: 'fac' in x, names)
     nonnumeric_columns = filter(lambda x: 'dmp' not in x, nonnumeric_columns)
 
-    big_X = big_X.drop(nonnumeric_columns, 1)
-    print("Shape of Data after dropping cols:", np.shape(big_X))
+    # XGBoost doesn't (yet) handle categorical features automatically,
+    # so we need to change them to columns of integer values.
+    le = LabelEncoder()
+    for feature in nonnumeric_columns:
+        big_X[feature] = le.fit_transform(big_X[feature])
+
+    # Get the categorical values
+    big_X_categorical_values = big_X[nonnumeric_columns]
+
+
+    # values appearing less than min_obs are grouped into one dummy variable.
+    enc = OneHotEncoder()
+    big_X_categorical_values = enc.fit_transform(big_X_categorical_values)
+
+    big_X = big_X.drop[nonnumeric_columns, 1]
 
     # Rescale all cols.
     big_X = big_X.astype(np.float32)
     scaler = StandardScaler()
     big_X = scaler.fit_transform(big_X)
 
+    # Add the one hot encodings to the big_X matrix.
+    big_X = pd.concat([big_X, big_X_categorical_values], axis=1)
+    print("Shape of Data after adding one hot cols:", np.shape(big_X))
     # Prepare the inputs for the model
     x_train = big_X[0:x_train.shape[0]]
     x_test = big_X[x_train.shape[0]::]

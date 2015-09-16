@@ -5,7 +5,8 @@ __author__ = 'michael.pearmain'
 
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import LabelEncoder, StandardScaler, OneHotEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.feature_extraction import DictVectorizer
 
 
 ''' Below are two functions for creating data,
@@ -76,12 +77,15 @@ def make_data_keras(train_path, test_path):
     # Get the categorical values
     big_X_categorical_values = big_X[nonnumeric_columns]
 
-
     # values appearing less than min_obs are grouped into one dummy variable.
-    enc = OneHotEncoder()
-    big_X_categorical_values = enc.fit_transform(big_X_categorical_values)
+    big_X_categorical_values = [dict(r.iteritems()) for _, r in big_X_categorical_values.iterrows()]
+    train_fea = DictVectorizer(sparse=False).fit_transform(big_X_categorical_values).toarray()
 
-    big_X = big_X.drop[nonnumeric_columns, 1]
+    print(train_fea.shape)
+    train_fea = pd.DataFrame(train_fea)
+
+
+    big_X = big_X.drop(nonnumeric_columns, 1)
 
     # Rescale all cols.
     big_X = big_X.astype(np.float32)
@@ -89,7 +93,7 @@ def make_data_keras(train_path, test_path):
     big_X = scaler.fit_transform(big_X)
 
     # Add the one hot encodings to the big_X matrix.
-    big_X = pd.concat([big_X, big_X_categorical_values], axis=1)
+    big_X = pd.concat([big_X, train_fea], axis=1)
     print("Shape of Data after adding one hot cols:", np.shape(big_X))
     # Prepare the inputs for the model
     x_train = big_X[0:x_train.shape[0]]

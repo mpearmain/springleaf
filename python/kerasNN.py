@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
-from keras.layers.advanced_activations import PReLU
+from keras.optimizers import SGD
 from keras.utils import np_utils
 from sklearn import metrics
 from sklearn.cross_validation import KFold
@@ -22,11 +22,6 @@ from make_data import make_data_keras
 '''
 
 
-
-
-
-
-
 def float32(k):
     return np.cast['float32'](k)
 
@@ -34,22 +29,20 @@ def float32(k):
 def build_model(input_dim, output_dim):
     model = Sequential()
     model.add(Dropout(0.2))
-    model.add(Dense(input_dim, 1999, init='glorot_uniform'))
-    model.add(PReLU((1999,)))
-    model.add(Dropout(0.3))
+    model.add(Dense(input_dim, 2200, init='glorot_uniform'))
+    model.add(Dropout(0.5))
 
-    model.add(Dense(1999, 1500, init='glorot_uniform'))
-    model.add(PReLU((1500,)))
-    model.add(Dropout(0.3))
+    model.add(Dense(2200, 1100, init='glorot_uniform'))
+    model.add(Dropout(0.5))
 
-    model.add(Dense(1500, 500, init='glorot_uniform'))
-    model.add(PReLU((500,)))
-    model.add(Dropout(0.3))
+    model.add(Dense(1100, 1100, init='glorot_uniform'))
+    model.add(Dropout(0.5))
 
-    model.add(Dense(500, output_dim, init='glorot_uniform'))
+    model.add(Dense(1100, output_dim, init='glorot_uniform'))
     model.add(Activation('sigmoid'))
 
-    model.compile(loss='binary_crossentropy', optimizer="adagrad")
+    sgd = SGD(lr=0.0005, nesterov=True, decay=0.05, momentum=0)
+    model.compile(loss='binary_crossentropy', optimizer=sgd)
     return model
 
 
@@ -74,7 +67,7 @@ if __name__ == "__main__":
     print("Validation...")
 
     nb_folds = 4
-    kfolds = KFold(len(y), nb_folds,shuffle=True, random_state=1234)
+    kfolds = KFold(len(y), nb_folds,shuffle=False, random_state=1234)
     av_roc = 0.
     f = 0
     for train, valid in kfolds:
@@ -94,7 +87,7 @@ if __name__ == "__main__":
 
         print("Training model...")
 
-        model.fit(X_train, Y_train, nb_epoch=10, batch_size=132,
+        model.fit(X_train, Y_train, nb_epoch=400, batch_size=120,
                   validation_data=(X_valid, Y_valid), verbose=1)
         valid_preds = model.predict_proba(X_valid, verbose=0)
         valid_preds = valid_preds[:, 1]
@@ -107,7 +100,7 @@ if __name__ == "__main__":
     print("Generating submission...")
 
     model = build_model(input_dim, output_dim)
-    model.fit(x_train, Y, nb_epoch=10, batch_size=132)
+    model.fit(x_train, Y, nb_epoch=400, batch_size=120)
 
     preds = model.predict_proba(X_test, verbose=0)[:, 1]
     submission = pd.DataFrame(preds, index=ids, columns=['target'])

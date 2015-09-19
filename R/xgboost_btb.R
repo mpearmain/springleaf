@@ -8,37 +8,31 @@ xseed <- 1
 set.seed(xseed)
 
 ## load and process data ####
-xtrain <- read_csv(file = "./input/xtrain_v5.csv")
+xtrain <- read_csv(file = "./input/xtrain_v7.csv")
 id_train <- xtrain$ID; xtrain$ID <- NULL
 y <- xtrain$target; xtrain$target <- NULL
-xvalid <- read_csv(file = "./input/xvalid_v5.csv")
-id_valid <- xvalid$ID; xvalid$ID <- NULL
-y_valid <- xvalid$target; xvalid$target <- NULL
-xtest <- read_csv(file = "./input/xtest_v5.csv")
+xtest <- read_csv(file = "./input/xtest_v7.csv")
 id_test <- xtest$ID; xtest$ID <- NULL
 
-## processing of factors
-# drop the job titles for now
-xtrain$facVAR0404 <- xtrain$facVAR0493 <- NULL
-xvalid$facVAR0404 <- xvalid$facVAR0493 <- NULL
-xtest$facVAR0404 <- xtest$facVAR0493 <- NULL
-# sparsify
-fact_cols <- grep("fac",colnames(xtrain))
-xtr <- xtrain[,fact_cols] ; xv <- xvalid[,fact_cols]; xte <- xtest[,fact_cols]
-xtrain <- xtrain[, -fact_cols]; xvalid <- xvalid[,-fact_cols]; xtest <- xtest[,-fact_cols]
-xd <- rbind(xtr, xv, xte)
-a <- sparse.model.matrix(~ . -1, data = xd); a <- as.matrix(a)
-flc <- findLinearCombos(a); a <- a[,-flc$remove]
-xtr_fc <- a[1:nrow(xtrain),]
-xv_fc <- a[(nrow(xtrain)+1):(nrow(xtrain) + nrow(xvalid)),]
-xte_fc <- a[(nrow(xtrain)+nrow(xvalid) + 1):nrow(a),]
-xtrain <- data.frame(xtrain, xtr_fc)
-xvalid <- data.frame(xvalid, xv_fc)
-xtest <- data.frame(xtest, xte_fc)
-rm(xte, xte_fc, xtr, xtr_fc, xv, xv_fc)
+# reduction
+train.unique.count=lapply(xtrain, function(x) length(unique(x)))
+train.unique.count_1=unlist(train.unique.count[unlist(train.unique.count)==1])
+train.unique.count_2=unlist(train.unique.count[unlist(train.unique.count)==2])
+train.unique.count_2=train.unique.count_2[-which(names(train.unique.count_2)=='target')]
+
+delete_const=names(train.unique.count_1)
+delete_NA56=names(which(unlist(lapply(xtrain[,(names(xtrain) %in% names(train.unique.count_2))], function(x) max(table(x,useNA='always'))))==145175))
+delete_NA89=names(which(unlist(lapply(train[,(names(train) %in% names(train.unique.count_2))], function(x) max(table(x,useNA='always'))))==145142))
+delete_NA918=names(which(unlist(lapply(train[,(names(train) %in% names(train.unique.count_2))], function(x) max(table(x,useNA='always'))))==144313))
+
+
 
 ## xgboost  ####
 #Set xgboost test and training and validation datasets
+xfold <- read_csv(file = "./input/xfolds.csv")
+subrange <- which(xfold$valid == 1)
+xvalid <- xtrain[subrange,]; y_valid <- y[subrange]
+xtrain <- xtrain[-subrange,]; y <- y[-subrange]
 xgtrain <- xgb.DMatrix(data = as.matrix(xtrain), label= y)
 xgval <-  xgb.DMatrix(data = as.matrix(xvalid), label= y_valid)
 watchlist <- list(val=xgval)
@@ -47,10 +41,10 @@ rm(xtrain, xvalid)
 # configure parameters
 param <- list(objective   = "binary:logistic",
               eval_metric = "auc",
-              "eta" = 0.004,
+              "eta" = 0.01,
               "min_child_weight" = 8,
-              "subsample" = .7, "colsample_bytree" = .7,
-              "max_depth" = 20,  "gamma" = 0.1, "silent" = 0)
+              "subsample" = .5, "colsample_bytree" = .1,
+              "max_depth" = 22,  "gamma" = 0.1, "silent" = 0)
 # fit the xgb
 clf <- xgb.train(params = param, data = xgtrain, 
                  nround=5000, print.every.n = 25, watchlist=watchlist, 
@@ -65,5 +59,5 @@ for (rows in split(1:nrow(xtest), ceiling((1:nrow(xtest))/10000))) {
 }
 
 cat("saving the submission file\n")
-fname <- paste("./submissions/xgboost_dataV5_20150901.csv", sep = "")
+fname <- paste("./submissions/xgboost_dataV6_20150905.csv", sep = "")
 write_csv(submission, fname)

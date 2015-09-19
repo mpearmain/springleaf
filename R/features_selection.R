@@ -80,27 +80,29 @@ msg <- function(mmm,...)
 
 ## feature selection - gbm-based ####
 # load the results from greedy feature selection
-for (which_version in c("v5"))
+for (which_version in c("v7"))
 {
   xtrain <- read_csv(file = paste("./input/xtrain_",which_version,".csv",sep = "") )
   id_train <- xtrain$ID; xtrain$ID <- NULL
   y <- xtrain$target; xtrain$target <- NULL
   
-  xtest <- read_csv(file = paste("./input/xtest_",which_version,".csv",sep = "") )
-  id_test <- xtest$ID; xtest$ID <- NULL
   
   set.seed(20150817)
-  idFix <-createDataPartition(y, times = 25, p = 0.1, list = T)
+  idFix <-createDataPartition(y, times = 50, p = 0.1, list = T)
   relevMat <- array(0, c(length(idFix), ncol(xtrain)))
   for (ii in seq(idFix))
   {
       idx <- idFix[[ii]]
       x0 <- xtrain[idx,]; y0 <- y[idx]
-      mod0 <- gbm.fit(x = x0, y = y0, n.trees = 100, interaction.depth = 12, shrinkage = 0.05,
+      mod0 <- gbm.fit(x = x0, y = y0, n.trees = 100, interaction.depth = 25, shrinkage = 0.05,
           distribution = "bernoulli", verbose = T)
       relevMat[ii,] <-  summary(mod0, order = F, plot = F)[,2]
       print(ii)
   }
+  
+  xtest <- read_csv(file = paste("./input/xtest_",which_version,".csv",sep = "") )
+  id_test <- xtest$ID; xtest$ID <- NULL
+  
   
   # version 1: all non-zero
   subset1 <- which(apply(relevMat,2,prod) != 0)

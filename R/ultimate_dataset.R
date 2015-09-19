@@ -108,8 +108,10 @@ xtrain[is.na(xtrain)] <- -1; xtest[is.na(xtest)] <- -9.999900e+04
       rm(corr_value)
       # store the intermediate file
       write_csv(corr_pairs, path = "./input/correlated_pairs.csv")
+      
+      
 }
-  #corr_pairs <- read_csv(file = "./input/raw_correlated_pairs.csv")
+  corr_pairs <- read_csv(file = "./input/correlated_pairs.csv")
 
   # suspicious columns - evaluate adequacy of pairwise differences of correlated ones
   xsum <- xdiff <- rep(0, nrow(corr_pairs))
@@ -144,7 +146,7 @@ xtrain[is.na(xtrain)] <- -1; xtest[is.na(xtest)] <- -9.999900e+04
   for (ii in 1:nrow(corr_pairs))
   {
     i1 <- corr_pairs[ii,1]; i2 <- corr_pairs[ii,2]
-    if (corr_pairs$xsum[ii] > 0.57)
+    if (corr_pairs$xsum[ii] > 0.53)
     {
       # attach new variable to train
       loc_var <- xtrain[, i1] + xtrain[,i2]
@@ -158,7 +160,7 @@ xtrain[is.na(xtrain)] <- -1; xtest[is.na(xtest)] <- -9.999900e+04
       colnames(xtest)[ncol(xtest)] <- newname
     }
     
-    if (corr_pairs$xdiff[ii] > 0.57)
+    if (corr_pairs$xdiff[ii] > 0.53)
     {
       # attach new variable to train
       loc_var <- xtrain[, i1] - xtrain[,i2]
@@ -184,9 +186,11 @@ xtrain[is.na(xtrain)] <- -1; xtest[is.na(xtest)] <- -9.999900e+04
 ## find linear combinations ####
   # shit is too big to fit in memory => doing it via sort of bagging
   # i.e. draw a subset N times, record variables to drop in each
-  nBags <- 100
-  set.seed(20150817)
-  idFix <- createDataPartition(1:ncol(xtrain), times = nBags, p = 0.2, list = T)
+  # run as long as you feel like - it keeps finding new combos 
+  # to drop even after 1000 iterations
+  nBags <- 1000
+  set.seed(254)
+  idFix <- createDataPartition(1:ncol(xtrain), times = nBags, p = 0.1, list = T)
   columns_to_drop <- list()
   for (ff in 1:length(idFix))
   {
@@ -200,10 +204,12 @@ xtrain[is.na(xtrain)] <- -1; xtest[is.na(xtest)] <- -9.999900e+04
   }
   columns_to_drop <- unique(unlist(columns_to_drop))
   indices_to_drop <- which(colnames(xtrain) %in% columns_to_drop)
+  print(length(indices_to_drop))
   xtrain <- xtrain[,-indices_to_drop]
   xtest <- xtest[,-indices_to_drop]
   rm(columns_to_drop, indices_to_drop)
   
+# SFSG #
 
 ## factor handling  ####
 isTrain <- 1:nrow(xtrain_fc); xdat_fc <- rbind(xtrain_fc, xtest_fc); rm(xtrain_fc, xtest_fc)
@@ -411,15 +417,16 @@ isTrain <- 1:nrow(xtrain_fc); xdat_fc <- rbind(xtrain_fc, xtest_fc); rm(xtrain_f
   }
   
   # drop the factors
-  
-  # SFSG # 
-  
+  ix <- which(colnames(xtrain) %in% factor_vars)
+  xtrain <- xtrain[,-ix]
+  xtest <- xtest[,-ix]
+
 ##  output formatted datasets ####
 # store pure train set
 xtrain$ID <- id_train; xtrain$target <- y
 colnames(xtrain) <- str_replace_all(colnames(xtrain), "_", "")
-write_csv(xtrain, path = "./input/xtrain_v6.csv")
+write_csv(xtrain, path = "./input/xtrain_v8.csv")
 
 xtest$ID <- id_test
 colnames(xtest) <- str_replace_all(colnames(xtest), "_", "")
-write_csv(xtest, path = "./input/xtest_v6.csv")
+write_csv(xtest, path = "./input/xtest_v8.csv")

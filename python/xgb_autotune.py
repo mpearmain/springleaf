@@ -48,20 +48,20 @@ def xgboostcv(max_depth,
 if __name__ == "__main__":
     # Load data set and target values
     train, train_labels, test, test_labels = \
-        make_data(train_path = "../input/xtrain_v5_full.csv", test_path="../input/xtest_v5.csv")
+        make_data(train_path = "../input/xtrain_v6.csv", test_path="../input/xtest_v6.csv")
 
     xgboostBO = BayesianOptimization(xgboostcv,
-                                     {'max_depth': (12, 25),
-                                      'learning_rate': (0.3, 0.01),
-                                      'n_estimators': (478, 1500),
+                                     {'max_depth': (8, 30),
+                                      'learning_rate': (0.8, 0.1),
+                                      'n_estimators': (250, 1500),
                                       'gamma': (1., 0.01),
-                                      'min_child_weight': (5, 12),
-                                      'max_delta_step': (0., 0.1),
-                                      'subsample': (0.75, 0.85),
-                                      'colsample_bytree': (0.73, 0.85)
+                                      'min_child_weight': (2, 20),
+                                      'max_delta_step': (0., 0.3),
+                                      'subsample': (0.7, 0.85),
+                                      'colsample_bytree': (0.7, 0.85)
                                      })
 
-    xgboostBO.maximize(init_points=7, restarts=50, n_iter=20)
+    xgboostBO.maximize(init_points=7, restarts=50, n_iter=30)
     print('-' * 53)
 
     print('Final Results')

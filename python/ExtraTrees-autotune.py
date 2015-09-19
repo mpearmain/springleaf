@@ -23,8 +23,8 @@ def etccv(n_estimators, min_samples_split):
 if __name__ == "__main__":
     # Load data set and target values
     train, train_labels, test, test_labels = \
-        make_data(train_path ="./input/xtrain_v5_full.csv",
-                  test_path="./input/xtest_v5.csv")
+        make_data(train_path ="../input/xtrain_v5_full.csv",
+                  test_path="../input/xtest_v5.csv")
 
     # RF
     etcBO = BayesianOptimization(etccv, {'n_estimators': (200, 800),
@@ -46,4 +46,4 @@ if __name__ == "__main__":
     preds = rf.predict_proba(test)[:, 1]
     print('Prediction Complete')
     submission = submission = pd.DataFrame(preds, index=test_labels, columns=['target'])
-    submission.to_csv('./output/extratrees_autotune.csv')
+    submission.to_csv('../output/extratrees_autotune.csv')

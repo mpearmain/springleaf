@@ -79,8 +79,7 @@ msg <- function(mmm,...)
 # save.image("greedy_feature_selection.RData")
 
 ## feature selection - gbm-based ####
-# load the results from greedy feature selection
-for (which_version in c("v7"))
+for (which_version in c("v8"))
 {
   xtrain <- read_csv(file = paste("./input/xtrain_",which_version,".csv",sep = "") )
   id_train <- xtrain$ID; xtrain$ID <- NULL
@@ -89,45 +88,51 @@ for (which_version in c("v7"))
   
   set.seed(20150817)
   idFix <-createDataPartition(y, times = 50, p = 0.1, list = T)
-  relevMat <- array(0, c(length(idFix), ncol(xtrain)))
+  relevMat <- array(0, c(ncol(xtrain), length(idFix)))
   for (ii in seq(idFix))
   {
       idx <- idFix[[ii]]
       x0 <- xtrain[idx,]; y0 <- y[idx]
       mod0 <- gbm.fit(x = x0, y = y0, n.trees = 100, interaction.depth = 25, shrinkage = 0.05,
           distribution = "bernoulli", verbose = T)
-      relevMat[ii,] <-  summary(mod0, order = F, plot = F)[,2]
-      print(ii)
+      relevMat[,ii] <-  summary(mod0, order = F, plot = F)[,2]
+      msg(ii)
   }
   
   xtest <- read_csv(file = paste("./input/xtest_",which_version,".csv",sep = "") )
   id_test <- xtest$ID; xtest$ID <- NULL
   
   
-  # version 1: all non-zero
-  subset1 <- which(apply(relevMat,2,prod) != 0)
-  xtrain1 <- xtrain[,subset1]
-  xtest1 <- xtest[,subset1]
-  xtrain1$ID <- id_train; xtest1$ID <- id_test
-  xtrain1$target <- y
-  write_csv(xtrain1, path = paste("./input/xtrain_",which_version,"_r1.csv", sep = "") )
-  write_csv(xtest1, path = paste("./input/xtest_",which_version,"_r1.csv", sep = "") )
+#   # version 1: any non-zero
+#   subset1 <- which(apply(relevMat,2,sum) != 0)
+#   xtrain1 <- xtrain[,subset1]
+#   xtest1 <- xtest[,subset1]
+#   xtrain1$ID <- id_train; xtest1$ID <- id_test
+#   xtrain1$target <- y
+#   # version 2: non-zero 10pct of the time
+#   subset1 <- which(apply(apply(relevMat,2,sign),2,sum) > 0.1 * length(idFix))
+}
+
+## feature selection - rf-based ####
+for (which_version in c("v8"))
+{
+  xtrain <- read_csv(file = paste("./input/xtrain_",which_version,".csv",sep = "") )
+  id_train <- xtrain$ID; xtrain$ID <- NULL
+  y <- xtrain$target; xtrain$target <- NULL
   
-  # version 2: non-zero 0.25 of the time
-  subset1 <- which(apply(apply(relevMat,2,sign),2,sum) > 0.25 * length(idFix))
-  xtrain1 <- xtrain[,subset1]
-  xtest1 <- xtest[,subset1]
-  xtrain1$ID <- id_train; xtest1$ID <- id_test
-  xtrain1$target <- y
-  write_csv(xtrain1, path = paste("./input/xtrain_",which_version,"_r2.csv", sep = "") )
-  write_csv(xtest1, path = paste("./input/xtest_",which_version,"_r2.csv", sep = "") )
   
-  # version 3: non-zero 0.5 of the time
-  subset1 <- which(apply(apply(relevMat,2,sign),2,sum) > 0.5 * length(idFix))
-  xtrain1 <- xtrain[,subset1]
-  xtest1 <- xtest[,subset1]
-  xtrain1$ID <- id_train; xtest1$ID <- id_test
-  xtrain1$target <- y
-  write_csv(xtrain1, path = paste("./input/xtrain_",which_version,"_r3.csv", sep = "") )
-  write_csv(xtest1, path = paste("./input/xtest_",which_version,"_r3.csv", sep = "") )
+  set.seed(20150817)
+  idFix <-createDataPartition(y, times = 50, p = 0.1, list = T)
+  relevMat <- array(0, c(ncol(xtrain), length(idFix)))
+  for (ii in seq(idFix))
+  {
+    idx <- idFix[[ii]]
+    x0 <- xtrain[idx,]; y0 <- factor(y[idx])
+    x0 <- data.frame(x0, y0)
+    mod0 <- ranger(y0 ~ ., data = x0, num.trees = 250, verbose = T, importance = "impurity")
+    relevMat[,ii] <-  mod0$variable.importance
+    msg(ii)
+  }
+  
+
 }

@@ -4,6 +4,7 @@ require(caret)
 require(readr)
 require(doParallel)
 require(gbm)
+require(ranger)
 
 ## extra functions ####
 # print a formatted message
@@ -12,6 +13,16 @@ msg <- function(mmm,...)
   cat(sprintf(paste0("[%s] ",mmm),Sys.time(),...)); cat("\n")
 }
 
+auc<-function (actual, predicted) {
+  
+  r <- as.numeric(rank(predicted))
+  
+  n_pos <- as.numeric(sum(actual == 1))
+  n_neg <- as.numeric(length(actual) - n_pos)
+  auc <- (sum(r[actual == 1]) - n_pos * (n_pos + 1)/2)/(n_pos *  n_neg)
+  auc
+  
+}
 # SFSG # 
 
 ## feature selection - greedy ####
@@ -78,16 +89,19 @@ msg <- function(mmm,...)
 # rm(id_test, id_train, idFix, msg, relevMat, xtest, xtrain,y)
 # save.image("greedy_feature_selection.RData")
 
+## setup of repeated elements ####
+# load training data
+which_version <- "v8"
+xtrain <- read_csv(file = paste("./input/xtrain_",which_version,".csv",sep = "") )
+id_train <- xtrain$ID; xtrain$ID <- NULL
+y <- xtrain$target; xtrain$target <- NULL
+# create the split to evaluate over
+set.seed(20150817)
+idFix <-createDataPartition(y, times = 50, p = 0.1, list = T)
+
+
 ## feature selection - gbm-based ####
-for (which_version in c("v8"))
-{
-  xtrain <- read_csv(file = paste("./input/xtrain_",which_version,".csv",sep = "") )
-  id_train <- xtrain$ID; xtrain$ID <- NULL
-  y <- xtrain$target; xtrain$target <- NULL
-  
-  
-  set.seed(20150817)
-  idFix <-createDataPartition(y, times = 50, p = 0.1, list = T)
+
   relevMat <- array(0, c(ncol(xtrain), length(idFix)))
   for (ii in seq(idFix))
   {
@@ -114,25 +128,20 @@ for (which_version in c("v8"))
 }
 
 ## feature selection - rf-based ####
-for (which_version in c("v8"))
+relevMat <- array(0, c(ncol(xtrain), length(idFix)))
+for (ii in seq(idFix))
 {
-  xtrain <- read_csv(file = paste("./input/xtrain_",which_version,".csv",sep = "") )
-  id_train <- xtrain$ID; xtrain$ID <- NULL
-  y <- xtrain$target; xtrain$target <- NULL
-  
-  
-  set.seed(20150817)
-  idFix <-createDataPartition(y, times = 50, p = 0.1, list = T)
-  relevMat <- array(0, c(ncol(xtrain), length(idFix)))
-  for (ii in seq(idFix))
-  {
     idx <- idFix[[ii]]
     x0 <- xtrain[idx,]; y0 <- factor(y[idx])
     x0 <- data.frame(x0, y0)
     mod0 <- ranger(y0 ~ ., data = x0, num.trees = 250, verbose = T, importance = "impurity")
     relevMat[,ii] <-  mod0$variable.importance
     msg(ii)
-  }
-  
-
 }
+write_csv(data.frame(relevMat), "./input/importance_ranger.csv")  
+
+
+# xtest <- read_csv(file = paste("./input/xtest_",which_version,".csv",sep = "") )
+# id_test <- xtest$ID; xtest$ID <- NULL
+
+

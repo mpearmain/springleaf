@@ -95,24 +95,47 @@ which_version <- "v8"
 xtrain <- read_csv(file = paste("./input/xtrain_",which_version,".csv",sep = "") )
 id_train <- xtrain$ID; xtrain$ID <- NULL
 y <- xtrain$target; xtrain$target <- NULL
+
+which_version <- "v8a"
+xtrain1 <- read_csv(file = paste("./input/xtrain_",which_version,".csv",sep = "") )
+xtrain1$ID <- NULL; xtrain1$target <- NULL
+
+xtrain <- cbind(xtrain, xtrain1); rm(xtrain1)
+
 # create the split to evaluate over
 set.seed(20150817)
 idFix <-createDataPartition(y, times = 50, p = 0.1, list = T)
 
+## feature selection - rf-based ####
+relevMat <- array(0, c(ncol(xtrain), length(idFix)))
+for (ii in seq(idFix))
+{
+  idx <- idFix[[ii]]
+  x0 <- xtrain[idx,]; y0 <- factor(y[idx])
+  x0 <- data.frame(x0, y0)
+  mod0 <- ranger(y0 ~ ., data = x0, num.trees = 250, verbose = T, importance = "impurity")
+  relevMat[,ii] <-  mod0$variable.importance
+  msg(ii)
+}
+write_csv(data.frame(relevMat), "./input/importance_ranger.csv")  
+
+
+# xtest <- read_csv(file = paste("./input/xtest_",which_version,".csv",sep = "") )
+# id_test <- xtest$ID; xtest$ID <- NULL
 
 ## feature selection - gbm-based ####
+relevMat <- array(0, c(ncol(xtrain), length(idFix)))
+for (ii in seq(idFix))
+{
+    idx <- idFix[[ii]]
+    x0 <- xtrain[idx,]; y0 <- y[idx]
+    mod0 <- gbm.fit(x = x0, y = y0, n.trees = 100, interaction.depth = 25, shrinkage = 0.05,
+        distribution = "bernoulli", verbose = T)
+    relevMat[,ii] <-  summary(mod0, order = F, plot = F)[,2]
+    msg(ii)
+}
+write_csv(data.frame(relevMat), "./input/importance_gbm.csv")  
 
-  relevMat <- array(0, c(ncol(xtrain), length(idFix)))
-  for (ii in seq(idFix))
-  {
-      idx <- idFix[[ii]]
-      x0 <- xtrain[idx,]; y0 <- y[idx]
-      mod0 <- gbm.fit(x = x0, y = y0, n.trees = 100, interaction.depth = 25, shrinkage = 0.05,
-          distribution = "bernoulli", verbose = T)
-      relevMat[,ii] <-  summary(mod0, order = F, plot = F)[,2]
-      msg(ii)
-  }
-  
   xtest <- read_csv(file = paste("./input/xtest_",which_version,".csv",sep = "") )
   id_test <- xtest$ID; xtest$ID <- NULL
   
@@ -125,23 +148,7 @@ idFix <-createDataPartition(y, times = 50, p = 0.1, list = T)
 #   xtrain1$target <- y
 #   # version 2: non-zero 10pct of the time
 #   subset1 <- which(apply(apply(relevMat,2,sign),2,sum) > 0.1 * length(idFix))
-}
-
-## feature selection - rf-based ####
-relevMat <- array(0, c(ncol(xtrain), length(idFix)))
-for (ii in seq(idFix))
-{
-    idx <- idFix[[ii]]
-    x0 <- xtrain[idx,]; y0 <- factor(y[idx])
-    x0 <- data.frame(x0, y0)
-    mod0 <- ranger(y0 ~ ., data = x0, num.trees = 250, verbose = T, importance = "impurity")
-    relevMat[,ii] <-  mod0$variable.importance
-    msg(ii)
-}
-write_csv(data.frame(relevMat), "./input/importance_ranger.csv")  
 
 
-# xtest <- read_csv(file = paste("./input/xtest_",which_version,".csv",sep = "") )
-# id_test <- xtest$ID; xtest$ID <- NULL
 
 

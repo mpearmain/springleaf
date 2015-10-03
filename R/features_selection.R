@@ -163,7 +163,7 @@ xtrain1$target <- y
 write_csv(xtrain1, path = "./input/xtrain_v9_r2.csv")
 write_csv(xtest1, path = "./input/xtest_v9_r2.csv")
 
-# version 2: gbm, at least 10 pct non-zero
+# version 3: gbm, at least 10 pct non-zero
 subset1 <- which(idx > 0.1)
 xtrain1 <- xtrain[,subset1]
 xtest1 <- xtest[,subset1]
@@ -172,7 +172,7 @@ xtrain1$target <- y
 write_csv(xtrain1, path = "./input/xtrain_v9_r3.csv")
 write_csv(xtest1, path = "./input/xtest_v9_r3.csv")
 
-# version 3: gbm, at least 25 pct non-zero
+# version 4: gbm, at least 25 pct non-zero
 subset1 <- which(idx > 0.25)
 xtrain1 <- xtrain[,subset1]
 xtest1 <- xtest[,subset1]
@@ -181,3 +181,74 @@ xtrain1$target <- y
 write_csv(xtrain1, path = "./input/xtrain_v9_r4.csv")
 write_csv(xtest1, path = "./input/xtest_v9_r4.csv")
 
+
+# version 1: gbm, any non-zero
+subset1 <- which(rowSums(relmat1) == 0)
+xtrain1 <- xtrain[,-subset1]
+xtest1 <- xtest[,-subset1]
+xtrain1$ID <- id_train; xtest1$ID <- id_test
+xtrain1$target <- y
+write_csv(xtrain1, path = "./input/xtrain_v9_r1.csv")
+write_csv(xtest1, path = "./input/xtest_v9_r1.csv")
+
+# SFSG # 
+
+# selector for row
+idx <- rowMeans(relmat1 > 0)
+
+# version 2: gbm, at least 5 pct non-zero
+subset1 <- which(idx > 0.05 )
+xtrain1 <- xtrain[,subset1]
+xtest1 <- xtest[,subset1]
+xtrain1$ID <- id_train; xtest1$ID <- id_test
+xtrain1$target <- y
+write_csv(xtrain1, path = "./input/xtrain_v9_r2.csv")
+write_csv(xtest1, path = "./input/xtest_v9_r2.csv")
+
+# version 3: gbm, at least 10 pct non-zero
+subset1 <- which(idx > 0.1)
+xtrain1 <- xtrain[,subset1]
+xtest1 <- xtest[,subset1]
+xtrain1$ID <- id_train; xtest1$ID <- id_test
+xtrain1$target <- y
+write_csv(xtrain1, path = "./input/xtrain_v9_r3.csv")
+write_csv(xtest1, path = "./input/xtest_v9_r3.csv")
+
+# version 4: gbm, at least 25 pct non-zero
+subset1 <- which(idx > 0.25)
+xtrain1 <- xtrain[,subset1]
+xtest1 <- xtest[,subset1]
+xtrain1$ID <- id_train; xtest1$ID <- id_test
+xtrain1$target <- y
+write_csv(xtrain1, path = "./input/xtrain_v9_r4.csv")
+write_csv(xtest1, path = "./input/xtest_v9_r4.csv")
+
+
+# SFSG # 
+
+# version 5: rf, impact at least 0.5pct
+subset1 <- which(rowMeans(relmat2) >  0.5)
+xtrain1 <- xtrain[,subset1]
+xtest1 <- xtest[,subset1]
+xtrain1$ID <- id_train; xtest1$ID <- id_test
+xtrain1$target <- y
+write_csv(xtrain1, path = "./input/xtrain_v9_r5.csv")
+write_csv(xtest1, path = "./input/xtest_v9_r5.csv")
+
+# version 5: rf, impact at least 0.5pct
+subset1 <- which(rowMeans(relmat2) >  1)
+xtrain1 <- xtrain[,subset1]
+xtest1 <- xtest[,subset1]
+xtrain1$ID <- id_train; xtest1$ID <- id_test
+xtrain1$target <- y
+write_csv(xtrain1, path = "./input/xtrain_v9_r6.csv")
+write_csv(xtest1, path = "./input/xtest_v9_r6.csv")
+
+# version 5: rf, impact at least 0.5pct
+subset1 <- which(rowMeans(relmat2) >  2)
+xtrain1 <- xtrain[,subset1]
+xtest1 <- xtest[,subset1]
+xtrain1$ID <- id_train; xtest1$ID <- id_test
+xtrain1$target <- y
+write_csv(xtrain1, path = "./input/xtrain_v9_r7.csv")
+write_csv(xtest1, path = "./input/xtest_v9_r7.csv")

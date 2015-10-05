@@ -3,9 +3,11 @@ library(readr)
 library(xgboost)
 require(Matrix)
 require(caret)
+require(stringr)
 
 xseed <- 123
 vname <- "v9_r7"
+todate <- str_replace_all(str_sub(Sys.time(), 0, 10), "-", "")
 
 set.seed(xseed)
 
@@ -54,5 +56,5 @@ write_csv(submission, fname)
 submission <- data.frame(ID=id_valid); submission$target <- NA 
 pred <- predict(clf, xgval)
 submission$target <- pred
-fname <- paste("./submissions/predValid_data",stringr::str_replace(vname, "_",""),"_seed",xseed,"_20151004.csv", sep = "")
+fname <- paste("./submissions/predValid_data",stringr::str_replace(vname, "_",""),"_seed",xseed,"_",todate,".csv", sep = "")
 write_csv(submission, fname)

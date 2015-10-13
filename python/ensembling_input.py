@@ -13,7 +13,7 @@ from sklearn.metrics import roc_auc_score
 
 projPath = '/Users/konrad/Documents/projects/springleaf'
 
-which_version = "v9_r4"
+which_version = "v9_r3"
 xseed = 42
 todate = '20151011'
 

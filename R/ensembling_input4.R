@@ -6,7 +6,7 @@ require(caret)
 require(stringr)
 
 xseed <- 10
-vname <- "v9_r5"
+vname <- "v9_r1"
 todate <- str_replace_all(str_sub(Sys.time(), 0, 10), "-", "")
 
 set.seed(xseed)
@@ -34,15 +34,19 @@ param <- list(objective   = "binary:logistic",
               eval_metric = "auc",
               "eta" = 0.01,
               "min_child_weight" = 8,
-              "subsample" = .6,
-              "colsample_bytree" = .4,
-              "max_depth" = 22,
+              "subsample" = .7,
+              "colsample_bytree" = .3,
+              "max_depth" = 30,
               "gamma" = 0.1,
               "silent" = 0)
 # fit the xgb
-clf <- xgb.train(params = param, data = xgtrain,
-                 nround=5000, print.every.n = 25, watchlist=watchlist,
-                 early.stop.round = 50, maximize = TRUE)
+clf <- xgb.train(params = param,
+                 data = xgtrain,
+                 nround=5000,
+                 print.every.n = 25,
+                 watchlist=watchlist,
+                 early.stop.round = 50,
+                 maximize = TRUE)
 
 ## generate submission on validation and test sets ####
 # prediction on test set

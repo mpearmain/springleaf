@@ -52,8 +52,6 @@ for (ii in 1:ncol(xvalid))
   xvalid[,ii] <- read_csv(file_list[[ii]])$target
 }
 
-xrange <- c(1,3,5,6,7,8)
-
 # complete forecasts
 file_list2 <- str_replace(file_list, "predValid", "predFull")
 xfull <- array(0, c(length(id_test), length(file_list2)))
@@ -64,9 +62,8 @@ for (ii in 1:ncol(xvalid))
 
 ## build ensemble ####
 nTimes <- 40
-valRange <- seq(from = 0, to = 1, by = 0.025)
 idFix <- createDataPartition(y_valid, times = nTimes, p = 0.25)
-storageMat <- array(0, c(nTimes, 2 * length(valRange)))
+storageMat <- array(0, c(nTimes, 4))
 for (ii in 1:nTimes)
 {
   idx <- idFix[[ii]]
@@ -75,25 +72,26 @@ for (ii in 1:nTimes)
   
   # transform to rank
   xvalid0 <- apply(xvalid0, 2, rank); xvalid1 <- apply(xvalid1,2, rank)
-  for (jj in 1:length(valRange))
-  {
-    
-    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = valRange[jj])
-    prx <- predict(mod0, xvalid1); prx <- prx[,ncol(prx)]
-    storageMat[ii,jj] <- auc(yvalid1, prx)
-    
-    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = valRange[jj], standardize = F)
-    prx <- predict(mod0, xvalid1); prx <- prx[,ncol(prx)]
-    storageMat[ii,jj + length(valRange)] <- auc(yvalid1, prx)
-    
-   }
 
+      mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0)
+    prx <- predict(mod0, xvalid1); prx1 <- prx[,ncol(prx)]
+    storageMat[ii,1] <- auc(yvalid1, prx1)
+    
+    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0.05)
+    prx <- predict(mod0, xvalid1); prx2 <- prx[,ncol(prx)]
+    storageMat[ii,2] <- auc(yvalid1, prx2)
+    
+     storageMat[ii,3] <- auc(yvalid1, prx1 + prx2)
+    
+    
   msg(ii)
    
 }
 
 # fit complete model
-mod0 <- glmnet(x = xvalid, y = y_valid, alpha = valRange[which.max(colMeans(storageMat))])
+mod0 <- glmnet(x = xvalid, y = y_valid, alpha = 0)
 pred <- predict(mod0, xfull)
 pred <- pred[,ncol(pred)]
 xfor <- data.frame(ID = id_test, target = pred)
+xfor$target <- rank(xfor$target)/nrow(xfor)
+write_csv(xfor, path = paste("./submissions/ensemble_",todate,".csv", sep = ""))

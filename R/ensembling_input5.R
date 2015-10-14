@@ -6,7 +6,7 @@ require(caret)
 require(stringr)
 
 xseed <- 260681
-vname <- "v9_r1"
+vname <- "v9_r5"
 todate <- str_replace_all(str_sub(Sys.time(), 0, 10), "-", "")
 
 set.seed(xseed)
@@ -32,11 +32,11 @@ rm(xtrain, xvalid)
 # configure parameters
 param <- list(objective   = "binary:logistic",
               eval_metric = "auc",
-              "eta" = 0.01,
+              "eta" = 0.009,
               "min_child_weight" = 8,
               "subsample" = .7,
-              "colsample_bytree" = .3,
-              "max_depth" = 30,
+              "colsample_bytree" = .4,
+              "max_depth" = 35,
               "gamma" = 0.1,
               "silent" = 0)
 # fit the xgb
@@ -56,12 +56,12 @@ for (rows in split(1:nrow(xtest), ceiling((1:nrow(xtest))/10000))) {
   submission[rows, "target"] <- predict(clf, data.matrix(xtest[rows,]))
 }
 cat("saving the submission file\n")
-fname <- paste("./submissions/predFull4_data",stringr::str_replace(vname, "_",""),"_seed",xseed,"_", todate,".csv", sep = "")
+fname <- paste("./submissions/predFull5_data",stringr::str_replace(vname, "_",""),"_seed",xseed,"_", todate,".csv", sep = "")
 write_csv(submission, fname)
 
 # prediction on validation set
 submission <- data.frame(ID=id_valid); submission$target <- NA
 pred <- predict(clf, xgval)
 submission$target <- pred
-fname <- paste("./submissions/predValid4_data",stringr::str_replace(vname, "_",""),"_seed",xseed,"_",todate,".csv", sep = "")
+fname <- paste("./submissions/predValid_data",stringr::str_replace(vname, "_",""),"_seed",xseed,"_",todate,".csv", sep = "")
 write_csv(submission, fname)

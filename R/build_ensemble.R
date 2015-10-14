@@ -61,6 +61,8 @@ for (ii in 1:ncol(xvalid))
 }
 
 ## build ensemble ####
+set.seed(10)
+xx <- c(23)
 nTimes <- 40
 idFix <- createDataPartition(y_valid, times = nTimes, p = 0.25)
 storageMat <- array(0, c(nTimes, 4))
@@ -73,17 +75,12 @@ for (ii in 1:nTimes)
   # transform to rank
   xvalid0 <- apply(xvalid0, 2, rank); xvalid1 <- apply(xvalid1,2, rank)
 
-      mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0)
-    prx <- predict(mod0, xvalid1); prx1 <- prx[,ncol(prx)]
-    storageMat[ii,1] <- auc(yvalid1, prx1)
-    
-    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0.05)
+    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0)
     prx <- predict(mod0, xvalid1); prx2 <- prx[,ncol(prx)]
     storageMat[ii,2] <- auc(yvalid1, prx2)
     
-     storageMat[ii,3] <- auc(yvalid1, prx1 + prx2)
     
-    
+
   msg(ii)
    
 }

@@ -4,7 +4,7 @@ library(xgboost)
 require(Matrix)
 require(caret)
 require(stringr)
-
+require(glmnet)
 
 xseed <- 10
 vname <- "v9_r7"
@@ -64,7 +64,7 @@ for (ii in 1:ncol(xvalid))
 
 ## build ensemble ####
 nTimes <- 40
-valRange <- seq(from = 0, to = 1, by = 0.05)
+valRange <- seq(from = 0, to = 1, by = 0.025)
 idFix <- createDataPartition(y_valid, times = nTimes, p = 0.25)
 storageMat <- array(0, c(nTimes, 2 * length(valRange)))
 for (ii in 1:nTimes)
@@ -72,6 +72,7 @@ for (ii in 1:nTimes)
   idx <- idFix[[ii]]
   xvalid0 <- xvalid[-idx,]; yvalid0 <- y_valid[-idx]
   xvalid1 <- xvalid[idx,]; yvalid1 <- y_valid[idx]
+  
   # transform to rank
   xvalid0 <- apply(xvalid0, 2, rank); xvalid1 <- apply(xvalid1,2, rank)
   for (jj in 1:length(valRange))
@@ -85,8 +86,7 @@ for (ii in 1:nTimes)
     prx <- predict(mod0, xvalid1); prx <- prx[,ncol(prx)]
     storageMat[ii,jj + length(valRange)] <- auc(yvalid1, prx)
     
-    
- }
+   }
 
   msg(ii)
    

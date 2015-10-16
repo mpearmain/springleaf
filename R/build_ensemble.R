@@ -97,7 +97,8 @@ for (ii in 1:nTimes)
 }
 
 # fit complete model
-mod0 <- glmnet(x = xvalid, y = y_valid, alpha = 0)
+xsd <- apply(xvalid,1,sd)
+mod0 <- glmnet(x = xvalid, y = y_valid, alpha = 0, weights = xsd)
 pred <- predict(mod0, xfull)
 pred <- pred[,ncol(pred)]
 xfor <- data.frame(ID = id_test, target = pred)

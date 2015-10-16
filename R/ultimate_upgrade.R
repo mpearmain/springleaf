@@ -53,10 +53,6 @@ xtest_fc <- xtest[,fact_cols]; xtest <- xtest[, -fact_cols]
 xtrain_fc$zipcode <- xtrain$VAR_0212; xtest_fc$zipcode <- xtest$VAR_0212
 xtrain_fc$zipcode2 <- xtrain$VAR_0241; xtest_fc$zipcode2 <- xtest$VAR_0241
 
-## TODO: add counts
-
-## TODO: drop 0212, 0241 from the numerical part when aggregating
-
 ## factor handling: cleanup  ####
 isTrain <- 1:nrow(xtrain_fc); xdat_fc <- rbind(xtrain_fc, xtest_fc); rm(xtrain_fc, xtest_fc)
 xdat_fc$zipcode <- as.character(xdat_fc$zipcode)

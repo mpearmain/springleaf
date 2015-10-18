@@ -39,7 +39,7 @@ param <- list(objective   = "binary:logistic",
               "max_depth" = 35,
               "gamma" = 0.1,
               "silent" = 0)
-# fit the xgb
+# # fit the xgb
 clf <- xgb.train(params = param,
                  data = xgtrain,
                  nround=5000,
@@ -47,7 +47,8 @@ clf <- xgb.train(params = param,
                  watchlist=watchlist,
                  early.stop.round = 50,
                  maximize = TRUE)
-
+# load model file.
+#clf <- xgb.load("./input/cv-train.model")
 ## generate submission on validation and test sets ####
 # prediction on test set
 cat("making predictions in batches due to 8GB memory limitation\n")

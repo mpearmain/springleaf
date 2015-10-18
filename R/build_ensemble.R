@@ -5,6 +5,7 @@ require(Matrix)
 require(caret)
 require(stringr)
 require(glmnet)
+require(gbm)
 
 xseed <- 10
 vname <- "v9_r7"
@@ -71,17 +72,12 @@ for (ii in 1:nTimes)
   xvalid0 <- xvalid[-idx,]; yvalid0 <- y_valid[-idx]
   xvalid1 <- xvalid[idx,]; yvalid1 <- y_valid[idx]
   
-  mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0)
-  prx <- predict(mod0, xvalid1); prx1 <- prx[,ncol(prx)]
-  storageMat[ii,1] <- auc(yvalid1, prx1)
-  
-  
   # transform to rank
   xvalid0 <- apply(xvalid0, 2, rank); xvalid1 <- apply(xvalid1,2, rank)
 
     mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0)
-    prx <- predict(mod0, xvalid1); prx2 <- prx[,ncol(prx)]
-    storageMat[ii,2] <- auc(yvalid1, prx2)
+    prx <- predict(mod0, xvalid1); prx1 <- prx[,ncol(prx)]
+    storageMat[ii,1] <- auc(yvalid1, prx1)
     
     xsd <- apply(xvalid0,1,sd)
     mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0, weights = xsd)
@@ -92,11 +88,21 @@ for (ii in 1:nTimes)
     prx <- predict(mod0, xvalid1); prx3 <- prx[,ncol(prx)]
     storageMat[ii,3] <- auc(yvalid1, prx3)
     
-    storageMat[ii,4] <- auc(yvalid1,prx1 + prx2)
-    storageMat[ii,5] <- auc(yvalid1,prx1 + prx3)
-    storageMat[ii,6] <- auc(yvalid1,prx2 + prx3)
-    storageMat[ii,7] <- auc(yvalid1,prx1 + prx2 + prx3)
+    xsd <- apply(xvalid0,1,sd)
+    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0, weights = 1/xsd)
+    prx <- predict(mod0, xvalid1); prx4 <- prx[,ncol(prx)]
+    storageMat[ii,4] <- auc(yvalid1, prx4)
     
+    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0, weights = sqrt(1/xsd))
+    prx <- predict(mod0, xvalid1); prx5 <- prx[,ncol(prx)]
+    storageMat[ii,5] <- auc(yvalid1, prx5)
+    
+    storageMat[ii,6] <- auc(yvalid1, prx2 + prx4)
+    storageMat[ii,7]<- auc(yvalid1, prx3 + prx5)
+    
+    
+
+        
   msg(ii)
    
 }

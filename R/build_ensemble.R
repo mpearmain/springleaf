@@ -71,12 +71,17 @@ for (ii in 1:nTimes)
   xvalid0 <- xvalid[-idx,]; yvalid0 <- y_valid[-idx]
   xvalid1 <- xvalid[idx,]; yvalid1 <- y_valid[idx]
   
+  mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0)
+  prx <- predict(mod0, xvalid1); prx1 <- prx[,ncol(prx)]
+  storageMat[ii,1] <- auc(yvalid1, prx1)
+  
+  
   # transform to rank
   xvalid0 <- apply(xvalid0, 2, rank); xvalid1 <- apply(xvalid1,2, rank)
 
     mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0)
-    prx <- predict(mod0, xvalid1); prx1 <- prx[,ncol(prx)]
-    storageMat[ii,1] <- auc(yvalid1, prx1)
+    prx <- predict(mod0, xvalid1); prx2 <- prx[,ncol(prx)]
+    storageMat[ii,2] <- auc(yvalid1, prx2)
     
     xsd <- apply(xvalid0,1,sd)
     mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0, weights = xsd)
@@ -97,8 +102,9 @@ for (ii in 1:nTimes)
 }
 
 # fit complete model
+xvalid <- apply(xvalid, 2, rank); xfull <- apply(xfull,2, rank)
 xsd <- apply(xvalid,1,sd)
-mod0 <- glmnet(x = xvalid, y = y_valid, alpha = 0, weights = xsd)
+mod0 <- glmnet(x = xvalid, y = y_valid, alpha = 0, weights = sqrt(xsd))
 pred <- predict(mod0, xfull)
 pred <- pred[,ncol(pred)]
 xfor <- data.frame(ID = id_test, target = pred)

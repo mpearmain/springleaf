@@ -114,7 +114,8 @@ for (ii in 1:ncol(xvalid))
 set.seed(10)
 nTimes <- 40
 idFix <- createDataPartition(y_valid, times = nTimes, p = 0.25)
-storageMat <- array(0, c(nTimes, 7))
+xrange <-  seq(from = 0, to = 1, by = 0.05)
+storageMat <- array(0, c(nTimes, length(xrange) + 2) )
 for (ii in 1:nTimes)
 {
   idx <- idFix[[ii]]
@@ -125,11 +126,18 @@ for (ii in 1:nTimes)
   xvalid0 <- apply(xvalid0, 2, rank); xvalid1 <- apply(xvalid1,2, rank)
   xsd <- apply(xvalid0,1,sd)
 
-    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0, weights = sqrt(xsd))
+  xloc <- array(0, c(nrow(xvalid1), length(xrange)))
+  
+  for (jj in seq(xrange))
+  {
+    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = xrange[jj], weights = sqrt(xsd))
     prx <- predict(mod0, xvalid1); prx1 <- prx[,ncol(prx)]
-    storageMat[ii,1] <- auc(yvalid1, prx1)
-    
-
+    storageMat[ii,jj] <- auc(yvalid1, prx1)
+    xloc[,jj] <- prx1
+  }
+  storageMat[ii,length(xrange) + 1] <- auc(yvalid1, rowMeans(xloc))
+  storageMat[ii,length(xrange) + 2] <- auc(yvalid1, rowMeans(apply(xloc,2,rank)))
+  
   msg(ii)
    
 }

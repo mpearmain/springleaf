@@ -32,12 +32,12 @@ rm(xtrain, xvalid)
 # configure parameters
 param <- list(objective   = "binary:logistic",
               eval_metric = "auc",
-              "eta" = 0.0227,
+              "eta" = 0.00227,
               "min_child_weight" = 4,
               'max_delta_step' = 0.5794087931,
               "subsample" = .76,
-              "colsample_bytree" = .76,
-              "max_depth" = 20,
+              "colsample_bytree" = .84567,
+              "max_depth" = 48,
               "gamma" = 0.882,
               "silent" = 0)
 # # fit the xgb

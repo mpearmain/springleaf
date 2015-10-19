@@ -5,7 +5,7 @@ require(Matrix)
 require(caret)
 require(stringr)
 
-xseed <- 10
+xseed <- 124
 vname <- "v9_r5"
 todate <- str_replace_all(str_sub(Sys.time(), 0, 10), "-", "")
 

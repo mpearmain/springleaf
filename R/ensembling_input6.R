@@ -5,8 +5,8 @@ require(Matrix)
 require(caret)
 require(stringr)
 
-xseed <- 260681
-vname <- "v9_r5"
+xseed <- 2015
+vname <- "v10_r3"
 todate <- str_replace_all(str_sub(Sys.time(), 0, 10), "-", "")
 
 set.seed(xseed)

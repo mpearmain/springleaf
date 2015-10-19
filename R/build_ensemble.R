@@ -62,6 +62,13 @@ for (ii in 1:ncol(xvalid))
 }
 
 ## build ensemble ####
+# cleanup
+# flc <- findLinearCombos(xvalid)
+# if (length(flc$remove))
+# {
+#   xvalid <- xvalid[,-flc$remove]
+#   xfull <- xfull[,-flc$remove]
+# }
 set.seed(10)
 nTimes <- 40
 idFix <- createDataPartition(y_valid, times = nTimes, p = 0.25)
@@ -74,35 +81,33 @@ for (ii in 1:nTimes)
   
   # transform to rank
   xvalid0 <- apply(xvalid0, 2, rank); xvalid1 <- apply(xvalid1,2, rank)
-
+  xsd <- apply(xvalid0,1,sd)
     mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0)
     prx <- predict(mod0, xvalid1); prx1 <- prx[,ncol(prx)]
     storageMat[ii,1] <- auc(yvalid1, prx1)
     
-    xsd <- apply(xvalid0,1,sd)
-    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0, weights = xsd)
+    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0, weights = sqrt(xsd))
     prx <- predict(mod0, xvalid1); prx2 <- prx[,ncol(prx)]
     storageMat[ii,2] <- auc(yvalid1, prx2)
     
-    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0, weights = sqrt(xsd))
+    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0, weights = 1/sqrt(xsd))
     prx <- predict(mod0, xvalid1); prx3 <- prx[,ncol(prx)]
     storageMat[ii,3] <- auc(yvalid1, prx3)
     
-    xsd <- apply(xvalid0,1,sd)
-    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0, weights = 1/xsd)
-    prx <- predict(mod0, xvalid1); prx4 <- prx[,ncol(prx)]
+    mod0 <- gbm.fit(x = xvalid0, y = yvalid0, n.trees = 100, interaction.depth = 16, shrinkage = 0.025, verbose = T)
+    prx4 <- predict(mod0, xvalid1, mod0$n.trees)
     storageMat[ii,4] <- auc(yvalid1, prx4)
-    
-    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0, weights = sqrt(1/xsd))
-    prx <- predict(mod0, xvalid1); prx5 <- prx[,ncol(prx)]
-    storageMat[ii,5] <- auc(yvalid1, prx5)
-    
-    storageMat[ii,6] <- auc(yvalid1, prx2 + prx4)
-    storageMat[ii,7]<- auc(yvalid1, prx3 + prx5)
-    
-    
 
-        
+#     mod0 <- mod0 <- gbm.fit(x = xvalid0, y = yvalid0, n.trees = 100,
+#                             interaction.depth = 16, shrinkage = 0.025, verbose = T, w = sqrt(xsd))
+#     prx5 <- predict(mod0, xvalid1, mod0$n.trees)
+#     storageMat[ii,5] <- auc(yvalid1, prx5)
+    
+    storageMat[ii,5] <- auc(yvalid1, rank(prx2) - 0.1 * rank(prx4))
+    storageMat[ii,6] <- auc(yvalid1, rank(prx2) - 0.1 * rank(prx3))
+    storageMat[ii,7] <- auc(yvalid1, rank(prx2) - 0.1 * rank(prx4))
+    
+    
   msg(ii)
    
 }
@@ -111,8 +116,12 @@ for (ii in 1:nTimes)
 xvalid <- apply(xvalid, 2, rank); xfull <- apply(xfull,2, rank)
 xsd <- apply(xvalid,1,sd)
 mod0 <- glmnet(x = xvalid, y = y_valid, alpha = 0, weights = sqrt(xsd))
-pred <- predict(mod0, xfull)
-pred <- pred[,ncol(pred)]
+pred <- predict(mod0, xfull); pred2 <- pred[,ncol(pred)]
+
+mod0 <- gbm.fit(x = xvalid, y = y_valid, n.trees = 100, interaction.depth = 16, shrinkage = 0.025, verbose = T)
+pred4 <- predict(mod0, xfull, mod0$n.trees)
+
+pred <- rank(pred2) - 0.1 * rank(pred4)
 xfor <- data.frame(ID = id_test, target = pred)
 xfor$target <- rank(xfor$target)/nrow(xfor)
 write_csv(xfor, path = paste("./submissions/ensemble_",todate,".csv", sep = ""))

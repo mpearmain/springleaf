@@ -5,8 +5,8 @@ require(Matrix)
 require(caret)
 require(stringr)
 
-xseed <- 123
-vname <- "v9_r7"
+xseed <- 10
+vname <- "v9_r5"
 todate <- str_replace_all(str_sub(Sys.time(), 0, 10), "-", "")
 
 set.seed(xseed)
@@ -49,7 +49,7 @@ for (rows in split(1:nrow(xtest), ceiling((1:nrow(xtest))/10000))) {
   submission[rows, "target"] <- predict(clf, data.matrix(xtest[rows,]))
 }
 cat("saving the submission file\n")
-fname <- paste("./submissions/predFull_data",stringr::str_replace(vname, "_",""),"_seed",xseed,"_20151004.csv", sep = "")
+fname <- paste("./submissions/predFull_data",stringr::str_replace(vname, "_",""),"_seed",xseed,"_", todate,".csv", sep = "")
 write_csv(submission, fname)
 
 # prediction on validation set

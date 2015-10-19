@@ -31,6 +31,55 @@ auc<-function (actual, predicted) {
   
 }
 
+buildEnsemble <- function(parVec, xset, yvec)
+{
+  set.seed(20130912)
+  # ensemble settings
+  initSize <- parVec[1]; howMany <- parVec[2];
+  blendIt <- parVec[3]; blendProp <- parVec[4]
+  
+  # storage matrix for blending coefficients
+  arMat <- array(0, c(blendIt, ncol(xset)))
+  colnames(arMat) <- colnames(xset)
+  
+  # loop over blending iterations
+  dataPart <- createDataPartition(1:ncol(arMat), times = blendIt, p  = blendProp)
+  for (bb in 1:blendIt)
+  {
+    idx <- dataPart[[bb]];    xx <- xset[,idx]
+    
+    # track individual scores
+    trackScore <- apply(xx, 2, function(x) auc(yvec,x))
+    
+    # select the individual best performer - store the performance
+    # and create the first column -> this way we have a non-empty ensemble
+    bestOne <- which.max(trackScore)
+    mastaz <- (rank(-trackScore) <= initSize)
+    best.track <- trackScore[mastaz];    hillNames <- names(best.track)
+    hill.df <- xx[,mastaz, drop = FALSE]
+    
+    # loop over adding consecutive predictors to the ensemble
+    for(ee in 1 : howMany)
+    {
+      # add a second component
+      trackScoreHill <- apply(xx, 2,
+                              function(x) auc(yvec,rowMeans(cbind(x , hill.df))))
+      
+      best <- which.max(trackScoreHill)
+      best.track <- c(best.track, max(trackScoreHill))
+      hillNames <- c(hillNames,names(best))
+      hill.df <- data.frame(hill.df, xx[,best])
+    }
+    
+    ww <- summary(factor(hillNames))
+    arMat[bb, names(ww)] <- ww
+  }
+  
+  wgt <- colSums(arMat)/sum(arMat)
+  
+  return(wgt)
+}
+
 ## load and process data ####
 xtrain <- read_csv(file = paste("./input/xtrain_",vname,".csv", sep = ""))
 id_train <- xtrain$ID; xtrain$ID <- NULL
@@ -62,13 +111,6 @@ for (ii in 1:ncol(xvalid))
 }
 
 ## build ensemble ####
-# cleanup
-# flc <- findLinearCombos(xvalid)
-# if (length(flc$remove))
-# {
-#   xvalid <- xvalid[,-flc$remove]
-#   xfull <- xfull[,-flc$remove]
-# }
 set.seed(10)
 nTimes <- 40
 idFix <- createDataPartition(y_valid, times = nTimes, p = 0.25)
@@ -82,32 +124,12 @@ for (ii in 1:nTimes)
   # transform to rank
   xvalid0 <- apply(xvalid0, 2, rank); xvalid1 <- apply(xvalid1,2, rank)
   xsd <- apply(xvalid0,1,sd)
-    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0)
+
+    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0, weights = sqrt(xsd))
     prx <- predict(mod0, xvalid1); prx1 <- prx[,ncol(prx)]
     storageMat[ii,1] <- auc(yvalid1, prx1)
     
-    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0, weights = sqrt(xsd))
-    prx <- predict(mod0, xvalid1); prx2 <- prx[,ncol(prx)]
-    storageMat[ii,2] <- auc(yvalid1, prx2)
-    
-    mod0 <- glmnet(x = xvalid0, y = yvalid0, alpha = 0, weights = 1/sqrt(xsd))
-    prx <- predict(mod0, xvalid1); prx3 <- prx[,ncol(prx)]
-    storageMat[ii,3] <- auc(yvalid1, prx3)
-    
-    mod0 <- gbm.fit(x = xvalid0, y = yvalid0, n.trees = 100, interaction.depth = 16, shrinkage = 0.025, verbose = T)
-    prx4 <- predict(mod0, xvalid1, mod0$n.trees)
-    storageMat[ii,4] <- auc(yvalid1, prx4)
 
-#     mod0 <- mod0 <- gbm.fit(x = xvalid0, y = yvalid0, n.trees = 100,
-#                             interaction.depth = 16, shrinkage = 0.025, verbose = T, w = sqrt(xsd))
-#     prx5 <- predict(mod0, xvalid1, mod0$n.trees)
-#     storageMat[ii,5] <- auc(yvalid1, prx5)
-    
-    storageMat[ii,5] <- auc(yvalid1, rank(prx2) - 0.1 * rank(prx4))
-    storageMat[ii,6] <- auc(yvalid1, rank(prx2) - 0.1 * rank(prx3))
-    storageMat[ii,7] <- auc(yvalid1, rank(prx2) - 0.1 * rank(prx4))
-    
-    
   msg(ii)
    
 }
@@ -118,10 +140,7 @@ xsd <- apply(xvalid,1,sd)
 mod0 <- glmnet(x = xvalid, y = y_valid, alpha = 0, weights = sqrt(xsd))
 pred <- predict(mod0, xfull); pred2 <- pred[,ncol(pred)]
 
-mod0 <- gbm.fit(x = xvalid, y = y_valid, n.trees = 100, interaction.depth = 16, shrinkage = 0.025, verbose = T)
-pred4 <- predict(mod0, xfull, mod0$n.trees)
-
-pred <- rank(pred2) - 0.1 * rank(pred4)
+pred <- pred2
 xfor <- data.frame(ID = id_test, target = pred)
 xfor$target <- rank(xfor$target)/nrow(xfor)
 write_csv(xfor, path = paste("./submissions/ensemble_",todate,".csv", sep = ""))
